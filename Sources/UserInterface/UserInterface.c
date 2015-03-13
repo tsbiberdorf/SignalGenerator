@@ -47,5 +47,6 @@ void UserInterfaceTask(void *pvParameters)
 			gUIMsgBufferIndex = 0;
 			newChar = 0;
 		}
+		vTaskDelay(1);
 	}
 }
