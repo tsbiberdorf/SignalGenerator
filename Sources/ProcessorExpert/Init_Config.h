@@ -80,7 +80,14 @@
 #include "UART1_Init.h"
 /* Initialization component generated header file */
 #include "UART1.h"
-  
+
+/* Initialization component configuration header file */
+#include "I2C0_Config.h"
+/* Initialization component static header file */
+#include "I2C0_Init.h"
+/* Initialization component generated header file */
+#include "I2C0.h"
+
 #endif /* __Init_Config_H */
 
 /*!
