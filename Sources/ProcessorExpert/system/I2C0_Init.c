@@ -59,77 +59,79 @@
 extern "C" {
 #endif
 
-void I2C0_Init(void) {
+void I2C0_Init(void)
+{
+	SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK;
 
-  /* Register 'I2C0_FLT' initialization */
-  #ifdef I2C0_FLT_VALUE
-  I2C0_FLT = I2C0_FLT_VALUE;
-  #endif
+	/* Register 'I2C0_FLT' initialization */
+#ifdef I2C0_FLT_VALUE
+	I2C0_FLT = I2C0_FLT_VALUE;
+#endif
 
-  /* Register 'I2C0_A1' initialization */
-  #ifdef I2C0_A1_VALUE
-  I2C0_A1 = I2C0_A1_VALUE;
-  #endif
+	/* Register 'I2C0_A1' initialization */
+#ifdef I2C0_A1_VALUE
+	I2C0_A1 = I2C0_A1_VALUE;
+#endif
 
-  /* Register 'I2C0_C2' initialization */
-  #ifdef I2C0_C2_VALUE
-  I2C0_C2 = I2C0_C2_VALUE;
-  #endif
+	/* Register 'I2C0_C2' initialization */
+#ifdef I2C0_C2_VALUE
+	I2C0_C2 = I2C0_C2_VALUE;
+#endif
 
-  /* Register 'I2C0_RA' initialization */
-  #ifdef I2C0_RA_VALUE
-  I2C0_RA = I2C0_RA_VALUE;
-  #endif
+	/* Register 'I2C0_RA' initialization */
+#ifdef I2C0_RA_VALUE
+	I2C0_RA = I2C0_RA_VALUE;
+#endif
 
-  /* Register 'I2C0_F' initialization */
-  #ifdef I2C0_F_VALUE
-  I2C0_F = I2C0_F_VALUE;
-  #endif
+	/* Register 'I2C0_F' initialization */
+#ifdef I2C0_F_VALUE
+	I2C0_F = I2C0_F_VALUE;
+#endif
 
-  /* Register 'I2C0_A2' initialization */
-  #ifdef I2C0_A2_VALUE
-  I2C0_A2 = I2C0_A2_VALUE;
-  #endif
+	/* Register 'I2C0_A2' initialization */
+#ifdef I2C0_A2_VALUE
+	I2C0_A2 = I2C0_A2_VALUE;
+#endif
 
-  /* Register 'I2C0_SMB' initialization */
-  #ifdef I2C0_SMB_VALUE
-  I2C0_SMB = I2C0_SMB_VALUE;
-  #endif
+	/* Register 'I2C0_SMB' initialization */
+#ifdef I2C0_SMB_VALUE
+	I2C0_SMB = I2C0_SMB_VALUE;
+#endif
 
-  /* Register 'I2C0_SLTL' initialization */
-  #ifdef I2C0_SLTL_VALUE
-  I2C0_SLTL = I2C0_SLTL_VALUE;
-  #endif
+	/* Register 'I2C0_SLTL' initialization */
+#ifdef I2C0_SLTL_VALUE
+	I2C0_SLTL = I2C0_SLTL_VALUE;
+#endif
 
-  /* Register 'I2C0_SLTH' initialization */
-  #ifdef I2C0_SLTH_VALUE
-  I2C0_SLTH = I2C0_SLTH_VALUE;
-  #endif
+	/* Register 'I2C0_SLTH' initialization */
+#ifdef I2C0_SLTH_VALUE
+	I2C0_SLTH = I2C0_SLTH_VALUE;
+#endif
 
-  /* Register 'I2C0_S' initialization */
-  #ifdef I2C0_S_VALUE
-  I2C0_S = I2C0_S_VALUE;
-  #endif
+	/* Register 'I2C0_S' initialization */
+#ifdef I2C0_S_VALUE
+	I2C0_S = I2C0_S_VALUE;
+#endif
 
-  /* Register 'I2C0_C1' initialization */
-  #ifdef I2C0_C1_VALUE_1
-  I2C0_C1 = I2C0_C1_VALUE_1;
-  #endif
+	/* Register 'I2C0_C1' initialization */
+#ifdef I2C0_C1_VALUE_1
+	I2C0_C1 = I2C0_C1_VALUE_1;
+#endif
 
-  /* Register 'I2C0_C1' initialization */
-  #if I2C0_C1_MASK_2
-    #if I2C0_C1_MASK_2 == 0xFF
-  I2C0_C1 = I2C0_C1_VALUE_2;
-    #elif I2C0_C1_MASK_2 == I2C0_C1_VALUE_2
-  I2C0_C1 |= I2C0_C1_VALUE_2;
-    #elif I2C0_C1_VALUE_2 == 0
-  I2C0_C1 &= ~I2C0_C1_MASK_2;
-    #else
-  I2C0_C1 = (I2C0_C1 & (~I2C0_C1_MASK_2)) | I2C0_C1_VALUE_2;
-    #endif
-  #elif defined(I2C0_C1_VALUE_2)
-  I2C0_C1 = I2C0_C1_VALUE_2;
-  #endif
+	/* Register 'I2C0_C1' initialization */
+#if I2C0_C1_MASK_2
+#if I2C0_C1_MASK_2 == 0xFF
+	I2C0_C1 = I2C0_C1_VALUE_2;
+#elif I2C0_C1_MASK_2 == I2C0_C1_VALUE_2
+	I2C0_C1 |= I2C0_C1_VALUE_2;
+#elif I2C0_C1_VALUE_2 == 0
+	I2C0_C1 &= ~I2C0_C1_MASK_2;
+#else
+	I2C0_C1 = (I2C0_C1 & (~I2C0_C1_MASK_2)) | I2C0_C1_VALUE_2;
+#endif
+#elif defined(I2C0_C1_VALUE_2)
+	I2C0_C1 = I2C0_C1_VALUE_2;
+#endif
 }
 
 #ifdef __cplusplus

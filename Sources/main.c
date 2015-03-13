@@ -13,6 +13,7 @@
 
 #include "main.h"
 #include "UserInterface\UserInterface.h"
+#include "Peripheral\FXOS8700CQ.h"
 
 char *task1name = "Task1";
 char *task2name = "Task2";
@@ -21,38 +22,34 @@ char *task2name = "Task2";
  * This task is made to stress the printf functionality
  * @param pvParameters
  */
-void TestPrint(void *pvParameters)
-{
-	int32_t delay=100;
-	int32_t getFlag = 0;
-	if( strcmp((char*)pvParameters,task1name) == 0)
-	{
-		delay = 1000;
-		getFlag = 1;
-	}
-	if( strcmp((char*)pvParameters,task2name) == 0)
-	{
-		delay = 5000;
-	}
-
-	for(;;)
-	{
-		printf("%s\r\n", (char*)pvParameters);
-		vTaskDelay(delay);
-
-//		if(getFlag)
-//		{
-//			printf("%c\r\n",getchar());
-//		}
-	}
-}
+//void TestPrint(void *pvParameters)
+//{
+//	int32_t delay=100;
+//	int32_t getFlag = 0;
+//	if( strcmp((char*)pvParameters,task1name) == 0)
+//	{
+//		delay = 1000;
+//		getFlag = 1;
+//	}
+//	if( strcmp((char*)pvParameters,task2name) == 0)
+//	{
+//		delay = 5000;
+//	}
+//
+//	for(;;)
+//	{
+//		printf("%s\r\n", (char*)pvParameters);
+//		vTaskDelay(delay);
+//	}
+//}
 
 static void CreateSigGenTasks()
 {
-	xTaskCreate(TestPrint, task1name, 512, task1name, 3, NULL);
-	xTaskCreate(TestPrint, task2name, 512, task2name, 2, NULL);
+//	xTaskCreate(TestPrint, task1name, 512, task1name, 3, NULL);
+//	xTaskCreate(TestPrint, task2name, 512, task2name, 2, NULL);
 
-	xTaskCreate(UserInterfaceTask, gUserInterfaceTaskname, 512, gUserInterfaceTaskname, 3, NULL);
+	xTaskCreate(UserInterfaceTask, gUserInterfaceTaskname, 512, (char *)gUserInterfaceTaskname, 2, NULL);
+	xTaskCreate(FXOS8700CQTask, gFXOS8700CQTaskname, 512, (char *)gFXOS8700CQTaskname, 3, NULL);
 }
 
 /*!
