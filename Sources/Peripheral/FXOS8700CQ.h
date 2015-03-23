@@ -15,5 +15,10 @@ const char *gFXOS8700CQTaskname;
 
 void FXOS8700CQTask(void *pvParameters);
 
+void readFXOSStatus();
+void readFXOSWhoAmI();
+void readFXOSx();
+void readFXOSy();
+void readFXOSz();
 
 #endif /* FXOS8700CQ_H_ */
