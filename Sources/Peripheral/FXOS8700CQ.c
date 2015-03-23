@@ -162,10 +162,6 @@ void init_I2C(void)
 {
     SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK; //Turn on clock to I2C0 module
 
-    /* configure GPIO for I2C0 function */
-//    PORTB_PCR2 = PORT_PCR_MUX(2);
-//    PORTB_PCR3 = PORT_PCR_MUX(2);
-
     I2C0_F  = 0x14;       /* set MULT and ICR */
 
     I2C0_C1 = I2C_C1_IICEN_MASK;       /* enable IIC */
