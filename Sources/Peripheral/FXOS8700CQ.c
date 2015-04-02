@@ -12,155 +12,47 @@
 #include "Cpu.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "i2cInterface.h"
 #include "FXOS8700CQ.h"
+
+
+typedef enum _FXOSCmds_e
+{
+	eFXOSidle,
+	eFXOSStatus,
+	eFXOSWhoAmI,
+	eFXOSx,
+	eFXOSy,
+	eFXOSz,
+}eFXOSCmds_t;
 
 const char *gFXOS8700CQTaskname = "FXOS8700CQ Interface Task";
 #define FXOS8700_I2C_ADDRESS                         0x1C
-#define i2c_DisableAck()       I2C0_C1 |= I2C_C1_TXAK_MASK
 
-#define i2c_RepeatedStart()    I2C0_C1     |= 0x04;
+uint32_t gFXOScmd = 0;
 
-#define i2c_Start()            I2C0_C1     |= 0x10;\
-                               I2C0_C1     |= I2C_C1_MST_MASK
-
-#define i2c_Stop()             I2C0_C1  &= ~I2C_C1_MST_MASK;\
-                               I2C0_C1  &= ~I2C_C1_TX_MASK
-
-#define i2c_EnterRxMode()      I2C0_C1   &= ~I2C_C1_TX_MASK;\
-                               I2C0_C1   &= ~I2C_C1_TXAK_MASK
-
-#define i2c_Wait()               while((I2C0_S & I2C_S_IICIF_MASK)==0) {} \
-                                  I2C0_S |= I2C_S_IICIF_MASK;
-
-#define i2c_write_byte(data)   I2C0_D = data
-
-#define MWSR                   0x00  /* Master write  */
-#define MRSW                   0x01  /* Master read */
-
-void init_I2C(void);
-void IIC_StartTransmission (unsigned char SlaveID, unsigned char Mode);
-void FXOS8700WriteRegister(unsigned char u8RegisterAddress, unsigned char u8Data);
-unsigned char FXOS8700ReadRegister(unsigned char u8RegisterAddress);
-
-unsigned char MasterTransmission;
-unsigned char SlaveID;
-
-
-/*******************************************************************/
-/*!
- * Start I2C Transmision
- * @param SlaveID is the 7 bit Slave Address
- * @param Mode sets Read or Write Mode
- */
-void IIC_StartTransmission (unsigned char SlaveID, unsigned char Mode)
+void readFXOSStatus()
 {
-  if(Mode == MWSR)
-  {
-    /* set transmission mode */
-    MasterTransmission = MWSR;
-  }
-  else
-  {
-    /* set transmission mode */
-    MasterTransmission = MRSW;
-  }
-
-  /* shift ID in right possition */
-  SlaveID = (unsigned char) FXOS8700_I2C_ADDRESS << 1;
-
-  /* Set R/W bit at end of Slave Address */
-  SlaveID |= (unsigned char)MasterTransmission;
-
-  /* send start signal */
-  i2c_Start();
-
-  /* send ID with W/R bit */
-  i2c_write_byte(SlaveID);
+	gFXOScmd = eFXOSStatus;
 }
 
-
-
-/*******************************************************************/
-/*!
- * Pause Routine
- */
-void Pause(void){
-    int n;
-    for(n=1;n<50;n++) {
-      __asm("nop");
-    }
+void readFXOSWhoAmI()
+{
+	gFXOScmd = eFXOSWhoAmI;
 }
 
-/*******************************************************************/
-/*!
- * Read a register from the MPR084
- * @param u8RegisterAddress is Register Address
- * @return Data stored in Register
- */
-unsigned char FXOS8700ReadRegister(unsigned char u8RegisterAddress)
+void readFXOSx()
 {
-  unsigned char result;
-  unsigned int j;
-
-  /* Send Slave Address */
-  IIC_StartTransmission(SlaveID,MWSR);
-  i2c_Wait();
-
-  /* Write Register Address */
-  I2C0_D = u8RegisterAddress;
-  i2c_Wait();
-
-  /* Do a repeated start */
-  I2C0_C1 |= I2C_C1_RSTA_MASK;
-
-  /* Send Slave Address */
-  I2C0_D = (FXOS8700_I2C_ADDRESS << 1) | 0x01; //read address
-  i2c_Wait();
-
-  /* Put in Rx Mode */
-  I2C0_C1 &= (~I2C_C1_TX_MASK);
-
-  /* Turn off ACK */
-  I2C0_C1 |= I2C_C1_TXAK_MASK;
-
-  /* Dummy read */
-  result = I2C0_D ;
-  for (j=0; j<5000; j++){};
-  i2c_Wait();
-
-  /* Send stop */
-  i2c_Stop();
-  result = I2C0_D ;
-  Pause();
-  return result;
+	gFXOScmd = eFXOSx;
 }
 
-/*******************************************************************/
-/*!
- * Write a byte of Data to specified register on MPR084
- * @param u8RegisterAddress is Register Address
- * @param u8Data is Data to write
- */
-void FXOS8700WriteRegister(unsigned char u8RegisterAddress, unsigned char u8Data)
+void readFXOSy()
 {
-  /* send data to slave */
-  IIC_StartTransmission(SlaveID,MWSR);
-  i2c_Wait();
-
-  I2C0_D = u8RegisterAddress;
-  i2c_Wait();
-
-  I2C0_D = u8Data;
-  i2c_Wait();
-
-  i2c_Stop();
-
-  Pause();
+	gFXOScmd = eFXOSy;
 }
 
-void init_I2C(void)
+void readFXOSz()
 {
-    SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK; //Turn on clock to I2C0 module
 
     I2C0_F  = 0x14;       /* set MULT and ICR */
 
@@ -169,21 +61,38 @@ void init_I2C(void)
 
 void FXOS8700CQTask(void *pvParameters)
 {
-	uint8_t i2cFlag;
 	uint8_t result;
 
 	printf("start FXOS8700CQTask\r\n");
 	init_I2C();
-	i2cFlag = 0;
+	gFXOScmd = 0;
 
 	while(1)
 	{
-		if(i2cFlag)
+		if(gFXOScmd)
 		{
-			i2cFlag = 0;
-			result = FXOS8700ReadRegister(0x0d);
+			switch(gFXOScmd)
+			{
+			case eFXOSStatus:
+				result = i2cReadRegister(FXOS8700_I2C_ADDRESS,0x00);
+				break;
+			case eFXOSWhoAmI:
+				result = i2cReadRegister(FXOS8700_I2C_ADDRESS,0x0d);
+				break;
+			case eFXOSx:
+				result = i2cReadRegister(FXOS8700_I2C_ADDRESS,0x0d);
+				break;
+			case eFXOSy:
+				result = i2cReadRegister(FXOS8700_I2C_ADDRESS,0x0d);
+				break;
+			case eFXOSz:
+				result = i2cReadRegister(FXOS8700_I2C_ADDRESS,0x0d);
+				break;
+			}
+			printf("result: %x\r\n",result);
+			gFXOScmd = 0;
 		}
-		vTaskDelay(1000);
+		vTaskDelay(10);
 	}
 }
 

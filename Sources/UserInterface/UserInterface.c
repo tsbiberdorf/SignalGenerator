@@ -17,6 +17,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "main.h"
+#include "..\Peripheral\FXOS8700CQ.h"
 #include "UserInterface.h"
 
 const char *gUserInterfaceTaskname = "User Interface Task";
@@ -43,8 +44,27 @@ void UserInterfaceTask(void *pvParameters)
 		}
 		if( (newChar == '\n') || (gUIMsgBufferIndex ==MAX_UI_MSG_SIZE) )
 		{
-			printf("UI: %s\r\n",gUIMsgBuffer);
 			gUIMsgBufferIndex = 0;
+			switch( gUIMsgBuffer[0] )
+			{
+			case '0':
+				readFXOSStatus();
+				break;
+			case 'd':
+				readFXOSWhoAmI();
+				break;
+			case '1':
+				readFXOSx();
+				break;
+			case '2':
+				readFXOSy();
+				break;
+			case '3':
+				readFXOSz();
+				break;
+			default:
+				printf("UI: %s\r\n",gUIMsgBuffer);
+			}
 			newChar = 0;
 		}
 		vTaskDelay(1);
