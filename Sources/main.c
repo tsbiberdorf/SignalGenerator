@@ -14,6 +14,7 @@
 #include "main.h"
 #include "UserInterface\UserInterface.h"
 #include "Peripheral\FXOS8700CQ.h"
+#include "Peripheral\uartInterface.h"
 
 char *task1name = "Task1";
 char *task2name = "Task2";
@@ -48,8 +49,9 @@ static void CreateSigGenTasks()
 //	xTaskCreate(TestPrint, task1name, 512, task1name, 3, NULL);
 //	xTaskCreate(TestPrint, task2name, 512, task2name, 2, NULL);
 
-	xTaskCreate(UserInterfaceTask, gUserInterfaceTaskname, 512, (char *)gUserInterfaceTaskname, 2, NULL);
+	xTaskCreate(UserInterfaceTask, gUserInterfaceTaskname, 512, (char *)gUserInterfaceTaskname, 3, NULL);
 	xTaskCreate(FXOS8700CQTask, gFXOS8700CQTaskname, 512, (char *)gFXOS8700CQTaskname, 3, NULL);
+	xTaskCreate(UartPingTask, gUartPingTaskname, 512, (char *)gUartPingTaskname, 2, NULL);
 }
 
 /*!

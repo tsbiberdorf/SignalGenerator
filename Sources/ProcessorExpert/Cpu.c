@@ -191,7 +191,25 @@ void Common_Init(void)
                  PORT_PCR_MUX(0x01) |
                  PORT_PCR_ODE_MASK
                 ));
-  /* PORTC_PCR5: ISF=0,MUX=4 */
+  /* PORTC_PCR3: ISF=0,MUX=3 */
+//  PORTC_PCR3 = (uint32_t)((PORTC_PCR3 & (uint32_t)~(uint32_t)(
+//                PORT_PCR_ISF_MASK |
+//                PORT_PCR_MUX(0x03)
+//               )) | (uint32_t)(
+//                PORT_PCR_MUX(0x03)
+//               ));
+  PORTC_PCR3 = (uint32_t)PORT_PCR_MUX(0x03)
+
+		  /* PORTC_PCR4: ISF=0,MUX=3 */
+//  PORTC_PCR4 = (uint32_t)((PORTC_PCR4 & (uint32_t)~(uint32_t)(
+//                PORT_PCR_ISF_MASK |
+//                PORT_PCR_MUX(0x03)
+//               )) | (uint32_t)(
+//                PORT_PCR_MUX(0x03)
+//               ));
+  PORTC_PCR4 = (uint32_t)PORT_PCR_MUX(0x03)
+
+				  /* PORTC_PCR5: ISF=0,MUX=4 */
   PORTC_PCR5 = (uint32_t)((PORTC_PCR5 & (uint32_t)~(uint32_t)(
                 PORT_PCR_ISF_MASK |
                 PORT_PCR_MUX(0x03)
@@ -274,20 +292,21 @@ void Common_Init(void)
                 PORT_PCR_MUX(0x07)
                ));
   /* PORTE_PCR0: ISF=0,MUX=3 */
-  PORTE_PCR0 = (uint32_t)((PORTE_PCR0 & (uint32_t)~(uint32_t)(
-                PORT_PCR_ISF_MASK |
-                PORT_PCR_MUX(0x04)
-               )) | (uint32_t)(
-                PORT_PCR_MUX(0x03)
-               ));
+//  PORTE_PCR0 = (uint32_t)((PORTE_PCR0 & (uint32_t)~(uint32_t)(
+//                PORT_PCR_ISF_MASK |
+//                PORT_PCR_MUX(0x04)
+//               )) | (uint32_t)(
+//                PORT_PCR_MUX(0x03)
+//               ));
   /* PORTE_PCR1: ISF=0,MUX=3 */
-  PORTE_PCR1 = (uint32_t)((PORTE_PCR1 & (uint32_t)~(uint32_t)(
-                PORT_PCR_ISF_MASK |
-                PORT_PCR_MUX(0x04)
-               )) | (uint32_t)(
-                PORT_PCR_MUX(0x03)
-               ));
+//  PORTE_PCR1 = (uint32_t)((PORTE_PCR1 & (uint32_t)~(uint32_t)(
+//                PORT_PCR_ISF_MASK |
+//                PORT_PCR_MUX(0x04)
+//               )) | (uint32_t)(
+//                PORT_PCR_MUX(0x03)
+//               ));
 
+//  PORTE_PCR1 = PORT_PCR_MUX(0x03);
   /* Disable clock gate of peripherals initialized in Common_Init() */
   /* SIM_SCGC5: PORTE=0,PORTD=0,PORTC=0,PORTB=0,PORTA=0 */
   SIM_SCGC5 &= (uint32_t)~(uint32_t)(

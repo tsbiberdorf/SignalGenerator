@@ -41,6 +41,7 @@ void UserInterfaceTask(void *pvParameters)
 		{
 			newChar = getchar();
 			gUIMsgBuffer[gUIMsgBufferIndex++] = newChar;
+			gUIMsgBuffer[gUIMsgBufferIndex] = 0x0;
 		}
 		if( (newChar == '\n') || (gUIMsgBufferIndex ==MAX_UI_MSG_SIZE) )
 		{
