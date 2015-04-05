@@ -133,7 +133,7 @@ unsigned char i2cReadRegister(uint8_t Address, uint8_t u8RegisterAddress)
  * @param u8RegisterAddress is Register Address
  * @param u8Data is Data to write
  */
-void i2cWriteRegister(uint8_t Address, uint8_t u8RegisterAddress, unsigned char u8Data)
+void i2cWriteRegister(uint8_t Address, uint8_t u8RegisterAddress, uint8_t u8Data)
 {
 	/* send data to slave */
 	IIC_StartTransmission(Address,SlaveID,MWSR);

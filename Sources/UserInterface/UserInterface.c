@@ -22,10 +22,21 @@
 
 const char *gUserInterfaceTaskname = "User Interface Task";
 #define MAX_UI_MSG_SIZE (128)
-static char gUIMsgBuffer[MAX_UI_MSG_SIZE +1 ];
+static int8_t gUIMsgBuffer[MAX_UI_MSG_SIZE +1 ];
 static uint16_t gUIMsgBufferIndex = 0;
 
 extern int32_t NewCharPresent();
+
+static void menu()
+{
+	printf("0 - status\r\n");
+	printf("w - Read who am i \r\n");
+	printf("A - write Accelerometer cntl Register \r\n");
+	printf("M - write Magnetometer cntl Register1 \r\n");
+	printf("N - write Magnetometer cntl Register1 \r\n");
+	printf("I - initialize the inertia sensor \r\n");
+	printf("r - read Inertial Sensor Values \r\n");
+}
 
 /*!
  * This task is made to stress the printf functionality
@@ -50,17 +61,26 @@ void UserInterfaceTask(void *pvParameters)
 			case '0':
 				readFXOSStatus();
 				break;
-			case 'd':
+			case 'w':
 				readFXOSWhoAmI();
 				break;
-			case '1':
-				readFXOSx();
+			case 'A':
+				writeAccelCntlReg(gUIMsgBuffer+1);
 				break;
-			case '2':
-				readFXOSy();
+			case 'M':
+				writeMagCntlReg1(gUIMsgBuffer+1);
 				break;
-			case '3':
-				readFXOSz();
+			case 'N':
+				writeMagCntlReg2(gUIMsgBuffer+1);
+				break;
+			case 'I':
+				initFXOS();
+				break;
+			case 'r':
+				readInertialValues();
+				break;
+			case '?':
+				menu();
 				break;
 			default:
 				printf("UI: %s\r\n",gUIMsgBuffer);
