@@ -165,7 +165,7 @@ unsigned char i2cMultiReadRegister(uint8_t Address, uint8_t u8RegisterAddress, u
 	i2c_Wait();
 
 	result = 0;
-	while(--ReadSize)
+	while(ReadSize--)
 	{
 		DataBlock[result++] = I2C0_D;
 		i2c_Wait();

@@ -198,7 +198,7 @@ static int32_t readInertiaSensor(uint8_t SingleRead)
 	uint16_t valueMSB;
 	uint16_t valueLSB;
 	uint8_t result;
-	uint8_t values[6];
+	uint8_t values[12];
 
 	if( SingleRead )
 	{
@@ -229,15 +229,15 @@ static int32_t readInertiaSensor(uint8_t SingleRead)
 	else
 	{
 
-		result = i2cMultiReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_X_MSB,values,6);
+		result = i2cMultiReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_X_MSB,values,12);
 		gRawInertiaSensorReading.xAccel = (int16_t)((values[0]<<8) | (values[1]>>2));
 		gRawInertiaSensorReading.yAccel = (int16_t)((values[2]<<8) | (values[3]>>2));
 		gRawInertiaSensorReading.zAccel = (int16_t)((values[4]<<8) | (values[5]>>2));
 
-		result = i2cMultiReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_X_MSB,values,6);
-		gRawInertiaSensorReading.xMag = (int16_t)((values[0]<<8) | (values[1]));
-		gRawInertiaSensorReading.yMag = (int16_t)((values[2]<<8) | (values[3]));
-		gRawInertiaSensorReading.zMag = (int16_t)((values[4]<<8) | (values[5]));
+//		result = i2cMultiReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_X_MSB,values,6);
+		gRawInertiaSensorReading.xMag = (int16_t)((values[6]<<8) | (values[7]));
+		gRawInertiaSensorReading.yMag = (int16_t)((values[8]<<8) | (values[9]));
+		gRawInertiaSensorReading.zMag = (int16_t)((values[10]<<8) | (values[11]));
 	}
 
 	inertiaComplement(&gRawInertiaSensorReading,&gInertiaSensorReading);
