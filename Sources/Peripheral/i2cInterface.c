@@ -209,11 +209,22 @@ void i2cWriteRegister(uint8_t Address, uint8_t u8RegisterAddress, uint8_t u8Data
 
 void init_I2C(void)
 {
+	uint32_t regValue;
 	SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK; //Turn on clock to I2C0 module
 
 	/* configure GPIO for I2C0 function */
 	//    PORTB_PCR2 = PORT_PCR_MUX(2);
 	//    PORTB_PCR3 = PORT_PCR_MUX(2);
+
+	regValue = I2C0_S;
+	printf("%X",regValue);
+	if(regValue & I2C_S_ARBL_MASK)
+	{
+		I2C0_S |= I2C_S_ARBL_MASK;
+		printf("had to write I2C_S_ARBL_MASK\r\n");
+	}
+	regValue = I2C0_S;
+	printf("%X",regValue);
 
 	I2C0_F  = 0x14; /* set MULT and ICR */
 //	I2C0_F  = I2C_F_MULT(0x00) | I2C_F_ICR(0x14);       /* set MULT and ICR */

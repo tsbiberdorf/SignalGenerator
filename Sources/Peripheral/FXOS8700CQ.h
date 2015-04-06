@@ -17,7 +17,9 @@ void FXOS8700CQTask(void *pvParameters);
 
 void readFXOSStatus();
 void readFXOSWhoAmI();
-void readInertialValues();
+void readInertiaValues();
+void readInertiaValuesMulti();
+
 void initFXOS();
 
 int32_t writeAccelCntlReg(int8_t *Cmd);

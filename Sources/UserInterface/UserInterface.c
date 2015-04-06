@@ -76,8 +76,14 @@ void UserInterfaceTask(void *pvParameters)
 			case 'I':
 				initFXOS();
 				break;
+			case 'J':
+				initMAX5825();
+				break;
 			case 'r':
-				readInertialValues();
+				readInertiaValues();
+				break;
+			case 'R':
+				readInertiaValuesMulti();
 				break;
 			case '?':
 				menu();
