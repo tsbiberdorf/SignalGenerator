@@ -128,6 +128,63 @@ unsigned char i2cReadRegister(uint8_t Address, uint8_t u8RegisterAddress)
 
 /*******************************************************************/
 /*!
+ * Read a register from the MPR084
+ * @param u8RegisterAddress is Register Address
+ * @return Data stored in Register
+ */
+unsigned char i2cMultiReadRegister(uint8_t Address, uint8_t u8RegisterAddress, uint8_t *DataBlock, uint8_t ReadSize)
+{
+	uint8_t result = 0;
+	unsigned int j;
+
+	/* Send Slave Address */
+	IIC_StartTransmission(Address,SlaveID,MWSR);
+	i2c_Wait();
+
+	/* Write Register Address */
+	I2C0_D = u8RegisterAddress;
+	i2c_Wait();
+
+	/* Do a repeated start */
+	I2C0_C1 |= I2C_C1_RSTA_MASK;
+
+	/* Send Slave Address */
+	I2C0_D = (Address << 1) | 0x01; //read address
+	i2c_Wait();
+
+	/* Put in Rx Mode */
+	I2C0_C1 &= (~I2C_C1_TX_MASK);
+
+	I2C0_C1 &= (~I2C_C1_TXAK_MASK);
+	/* Turn off ACK */
+//	I2C0_C1 |= I2C_C1_TXAK_MASK;
+
+	/* Dummy read */
+	result = I2C0_D ;
+	for (j=0; j<5000; j++){};
+	i2c_Wait();
+
+	result = 0;
+	while(--ReadSize)
+	{
+		DataBlock[result++] = I2C0_D;
+		i2c_Wait();
+
+		if(ReadSize == 1)
+		{
+			/* Turn off ACK */
+			I2C0_C1 |= I2C_C1_TXAK_MASK;
+		}
+	}
+	/* Send stop */
+	i2c_Stop();
+	DataBlock[result] = I2C0_D ;
+	Pause();
+	return result;
+}
+
+/*******************************************************************/
+/*!
  * Write a byte of Data to specified register on I2C0 bus
  * @param Address I2C bus address
  * @param u8RegisterAddress is Register Address
@@ -158,7 +215,9 @@ void init_I2C(void)
 	//    PORTB_PCR2 = PORT_PCR_MUX(2);
 	//    PORTB_PCR3 = PORT_PCR_MUX(2);
 
-	I2C0_F  = 0x14;       /* set MULT and ICR */
+	I2C0_F  = 0x14; /* set MULT and ICR */
+//	I2C0_F  = I2C_F_MULT(0x00) | I2C_F_ICR(0x14);       /* set MULT and ICR */
+//	I2C0_F  = I2C_F_MULT(0x20) | I2C_F_ICR(0x00);       /* set MULT and ICR */
 
 	I2C0_C1 = I2C_C1_IICEN_MASK;       /* enable IIC */
 }
