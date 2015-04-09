@@ -207,6 +207,33 @@ void i2cWriteRegister(uint8_t Address, uint8_t u8RegisterAddress, uint8_t u8Data
 	Pause();
 }
 
+/*******************************************************************/
+/*!
+ * Write a byte of Data to specified register on I2C0 bus
+ * @param Address I2C bus address
+ * @param PtrData pointer to where the data is located
+ * @param Size number of bytes to write
+ */
+void i2cWriteData(uint8_t Address, uint8_t *PtrData,uint8_t Size)
+{
+	uint8_t i;
+	if(Size)
+	{
+		/* send data to slave */
+		IIC_StartTransmission(Address,SlaveID,MWSR);
+		i2c_Wait();
+
+		for(i=0; i<Size; i++)
+		{
+			I2C0_D = PtrData[i];
+			i2c_Wait();
+		}
+		i2c_Stop();
+
+		Pause();
+	}
+}
+
 void init_I2C(void)
 {
 	uint32_t regValue;

@@ -18,6 +18,7 @@
 #include "task.h"
 #include "main.h"
 #include "..\Peripheral\FXOS8700CQ.h"
+#include "..\Peripheral\MAX5825eval.h"
 #include "UserInterface.h"
 
 const char *gUserInterfaceTaskname = "User Interface Task";
