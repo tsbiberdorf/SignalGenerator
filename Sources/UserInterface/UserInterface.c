@@ -62,6 +62,10 @@ void UserInterfaceTask(void *pvParameters)
 			case '0':
 				readFXOSStatus();
 				break;
+			case 'd':
+			case 'D':
+				parseDACCmd(gUIMsgBuffer);
+				break;
 			case 'w':
 				readFXOSWhoAmI();
 				break;

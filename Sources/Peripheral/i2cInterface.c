@@ -233,7 +233,14 @@ void i2cWriteData(uint8_t Address, uint8_t *PtrData,uint8_t Size)
 		Pause();
 	}
 }
-
+/**
+ * @details Initialise the I2C0 Bus.
+ *
+ * PTB2 - I2C0_SCL
+ * PTB3 - I2C0_SDA
+ *
+ * @return void
+ */
 void init_I2C(void)
 {
 	uint32_t regValue;

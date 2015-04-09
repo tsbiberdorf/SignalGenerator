@@ -28,7 +28,10 @@
 typedef enum _MAX5825Cmds_e
 {
 	eMAX5825idle,
-	eInitMAX5825,
+	eResetMAX5825,
+	eSWClrMAX5825,
+	eLoadCODEMAX5825,
+	eCode2DACMAX5825,
 }eMAX5825Cmds_t;
 
 #define MAX5825_RESET_REG		(0x35)
@@ -96,21 +99,44 @@ static void setCode2DACRegMAX5825(uint8_t DACAddr,uint16_t Data)
 	i2cWriteData(MAX5825_I2C_ADDRESS,cmdBlock,MAX5825_CMD_BLOCK_SIZE);
 }
 
-
+/**
+ * menu for MAX5825 DAC
+ */
+static void menuMAX5825()
+{
+	printf("MAX5825 menu options\r\n");
+	printf("d1: reset\r\n");
+	printf("d2: s/w clear\r\n");
+	printf("d3 <dac#> <value> : write 12bit value to DAC# CODE registers\r\n");
+	printf("d4 <dac#> : write DAC# CODE to DAC register\r\n");
+}
 /******************************************************************************
  * public
  *****************************************************************************/
 
 void initMAX5825()
 {
-	gMAX5825cmd = eInitMAX5825;
+	gMAX5825cmd = eMAX5825idle;
 }
 
-
+/**
+ * @details Perform MAX5825 DAC communication.
+ * The MAXIM5825PMB module should be connected as follows to the FRDM-K22F
+ * board.
+ *
+ * MAX5825       FRDM-K22F
+ * J1 connector
+ * Pin
+ * 1 _LDAC_     - J25:8 P3V3
+ * 2 _IRQ_      - n/c
+ * 3 SCL        - J24:12 PTB2 (I2C0_SCL)
+ * 4 SDA        - J24:10 PTB3 (I2C0_SDA)
+ * 5 GND        - J25:14 Gnd
+ * 6 VDD        - J25:4  P3V3
+ */
 void MAX5825evalTask(void *pvParameters)
 {
 	uint8_t result;
-
 	printf("start MAX5825evalTask\r\n");
 
 	gMAX5825cmd = eMAX5825idle;
@@ -119,10 +145,52 @@ void MAX5825evalTask(void *pvParameters)
 	{
 		if(gMAX5825cmd)
 		{
-			printf("result: %x\r\n",result);
+			switch(gMAX5825cmd)
+			{
+
+			}
 			gMAX5825cmd = 0;
 		}
 		vTaskDelay(10);
+	}
+}
+
+void parseDACCmd(const int8_t *Cmd)
+{
+	uint16_t dacIndex;
+	uint16_t dacCh;
+	uint16_t dacValue;
+	uint32_t retCode;
+	printf("MAX5825 cmd:%s\r\n",Cmd);
+
+	switch(Cmd[1])
+	{
+	case '1':
+		gMAX5825cmd = eResetMAX5825;
+		printf("eResetMAX5825\r\n");
+		break;
+	case '2':
+		gMAX5825cmd = eSWClrMAX5825;
+		printf("eSWClrMAX5825\r\n");
+		break;
+	case '3':
+		gMAX5825cmd = eLoadCODEMAX5825;
+		retCode = sscanf(Cmd+2,"%d%d%d",&dacIndex,&dacCh,&dacValue);
+		if(retCode == 3)
+		{
+			printf("eLoadCODEMAX5825 %d %d %d\r\n",dacIndex,dacCh,dacValue);
+		}
+		else
+		{
+			printf("invalid parameters to set DAC value\r\n");
+		}
+		break;
+	case '4':
+		gMAX5825cmd = eCode2DACMAX5825;
+		printf("eCode2DACMAX5825 %d \r\n",dacIndex);
+		break;
+	default:
+		menuMAX5825();
 	}
 }
 

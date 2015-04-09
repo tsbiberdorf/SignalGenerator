@@ -15,7 +15,7 @@ const char *gMAX5825evalTaskname;
 void MAX5825evalTask(void *pvParameters);
 
 void initMAX5825();
-
+void parseDACCmd(const int8_t *Cmd);
 
 
 #endif /* MAX5825EVAL_H_ */
