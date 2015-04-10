@@ -15,6 +15,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <assert.h>
 
 #include "Cpu.h"
@@ -24,6 +25,9 @@
 #include "MAX5825eval.h"
 
 
+/******************************************************************************
+ * MACROs/variables
+ */
 
 typedef enum _MAX5825Cmds_e
 {
@@ -47,6 +51,19 @@ const char *gMAX5825evalTaskname = "MAX5825 Interface Task";
 eMAX5825Cmds_t gMAX5825cmd = eMAX5825idle;
 uint8_t gMAX5825Data = 0;
 
+typedef struct sDAC
+{
+	uint8_t channel;
+	uint16_t value;
+}sDAC_t;
+
+sDAC_t gDACCmd;
+
+/**
+ * ============================================================================
+ * Private APIs
+ *=============================================================================
+ */
 
 /**
  * @details reset the DAC module
@@ -54,6 +71,7 @@ uint8_t gMAX5825Data = 0;
 static void resetMAX5825()
 {
 	uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_RESET_REG,0x96,0x30};
+	printf("resetMAX5825\r\n");
 
 	i2cWriteData(MAX5825_I2C_ADDRESS,cmdBlock,MAX5825_CMD_BLOCK_SIZE);
 }
@@ -64,6 +82,7 @@ static void resetMAX5825()
 static void swClrMAX5825()
 {
 	uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_SW_CLR_REG,0x96,0x30};
+	printf("swClrMAX5825\r\n");
 
 	i2cWriteData(MAX5825_I2C_ADDRESS,cmdBlock,MAX5825_CMD_BLOCK_SIZE);
 }
@@ -89,7 +108,7 @@ static void setCodeMAX5825(uint8_t DACAddr,uint16_t Data)
 /**
  * @details have the DAC channel shift CODE to its DAC register
  */
-static void setCode2DACRegMAX5825(uint8_t DACAddr,uint16_t Data)
+static void setCode2DACRegMAX5825(uint8_t DACAddr)
 {
 	uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_LOAD_DAC_REG,0x0,0x0};
 
@@ -110,9 +129,36 @@ static void menuMAX5825()
 	printf("d3 <dac#> <value> : write 12bit value to DAC# CODE registers\r\n");
 	printf("d4 <dac#> : write DAC# CODE to DAC register\r\n");
 }
-/******************************************************************************
- * public
- *****************************************************************************/
+
+/*
+ * @details store the DAC channel to send the command to.
+ *
+ */
+static void setChannel(uint8_t Channel)
+{
+	/**
+	 * @note need to add error checking here to make sure the channel is correct
+	 */
+	gDACCmd.channel = Channel;
+}
+
+/**
+ * @details store the value to write to the DAC channel
+ */
+static void setValue(uint16_t Value)
+{
+	/**
+	 * @note need to add error checking here to make sure the channel is correct
+	 */
+	gDACCmd.value = Value;
+}
+
+
+/**
+ * ============================================================================
+ * Public APIs
+ *=============================================================================
+ */
 
 void initMAX5825()
 {
@@ -147,7 +193,18 @@ void MAX5825evalTask(void *pvParameters)
 		{
 			switch(gMAX5825cmd)
 			{
-
+			case eResetMAX5825:
+				resetMAX5825();
+				break;
+			case eSWClrMAX5825:
+				swClrMAX5825();
+				break;
+			case eLoadCODEMAX5825:
+				setCodeMAX5825(gDACCmd.channel,gDACCmd.value);
+				break;
+			case eCode2DACMAX5825:
+				setCode2DACRegMAX5825(gDACCmd.channel);
+				break;
 			}
 			gMAX5825cmd = 0;
 		}
@@ -155,39 +212,62 @@ void MAX5825evalTask(void *pvParameters)
 	}
 }
 
+/**
+ * @details parse the DAC commands
+ */
 void parseDACCmd(const int8_t *Cmd)
 {
-	uint16_t dacIndex;
 	uint16_t dacCh;
 	uint16_t dacValue;
-	uint32_t retCode;
+	int32_t retCode;
+	char *nextValue,*ptrCheck;
 	printf("MAX5825 cmd:%s\r\n",Cmd);
 
 	switch(Cmd[1])
 	{
 	case '1':
 		gMAX5825cmd = eResetMAX5825;
-		printf("eResetMAX5825\r\n");
 		break;
 	case '2':
 		gMAX5825cmd = eSWClrMAX5825;
-		printf("eSWClrMAX5825\r\n");
+		swClrMAX5825();
 		break;
 	case '3':
-		gMAX5825cmd = eLoadCODEMAX5825;
-		retCode = sscanf(Cmd+2,"%d%d%d",&dacIndex,&dacCh,&dacValue);
-		if(retCode == 3)
+		dacCh = 0;
+		dacCh = strtol( (Cmd+2),&nextValue,10);
+		if(dacCh != 0)
 		{
-			printf("eLoadCODEMAX5825 %d %d %d\r\n",dacIndex,dacCh,dacValue);
+			dacValue = strtol( nextValue,&ptrCheck,10);
+			if(ptrCheck == nextValue)
+			{
+				retCode = -1;
+			}
+		}
+		if(retCode < 0)
+		{
+			printf("invalid parameters to set DAC value\r\n");
+		}
+		else
+		{
+			printf("eLoadCODEMAX5825 %d %d\r\n",dacCh,dacValue);
+			setChannel(dacCh);
+			setValue(dacValue);
+			gMAX5825cmd = eLoadCODEMAX5825;
+		}
+		break;
+	case '4':
+		dacCh = 0;
+		dacCh = strtol( (Cmd+2),NULL,10);
+		if(dacCh != 0)
+		{
+			printf("eCode2DACMAX5825 %d\r\n",dacCh,dacValue);
+			setChannel(dacCh);
+			gMAX5825cmd = eCode2DACMAX5825;
 		}
 		else
 		{
 			printf("invalid parameters to set DAC value\r\n");
 		}
-		break;
-	case '4':
-		gMAX5825cmd = eCode2DACMAX5825;
-		printf("eCode2DACMAX5825 %d \r\n",dacIndex);
 		break;
 	default:
 		menuMAX5825();
