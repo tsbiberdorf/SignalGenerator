@@ -292,7 +292,7 @@ void parseDACCmd(const int8_t *Cmd)
 			printf("invalid parameters to set DAC value\r\n");
 		}
 		break;
-	case '5':
+	case '6':
 		gMAX5825cmd = eMAX5825StopGenWave;
 		break;
 	default:
