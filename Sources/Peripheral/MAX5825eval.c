@@ -121,6 +121,22 @@ static void setCode2DACRegMAX5825(uint8_t DACAddr)
 }
 
 /**
+ * @todo need to complete code.
+ */
+static void setStartGenWave(uint8_t DACAddr)
+{
+
+}
+
+/**
+ * @todo need to complete code.
+ */
+static void setStopGenWave()
+{
+
+}
+
+/**
  * menu for MAX5825 DAC
  */
 static void menuMAX5825()

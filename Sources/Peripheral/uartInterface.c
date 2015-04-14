@@ -18,10 +18,39 @@
 
 
 const char *gUartPingTaskname = "UART ping Interface Task";
+#define PIN0 (1<<0)
+#define PIN1 (1<<1)
+#define PIT0_PULSE_TIMER (PIT_TCTRL0) /**< timer control register */
+#define PIT0_TIMER_DELAY (PIT_LDVAL0) /**< timeout period calculated by (Period * 48Mhz) */
+
+void PIT0_IRQ()
+{
+	PIT_TFLG0 = PIT_TFLG_TIF_MASK; // clear IRQ
+	GPIOB_PTOR = (PIN1);
+
+}
 
 static void initUartRxPins()
 {
+	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK;
 
+	GPIOB_PDDR |= (PIN0|PIN1);
+	GPIOB_PSOR = (PIN0|PIN1);
+//	GPIOB_PCOR = PIN1;
+	PORTB_PCR0 = PORT_PCR_MUX(0x1);
+	PORTB_PCR1 = PORT_PCR_MUX(0x1);
+
+	enable_irq();
+	/*
+	 * enable clock for PIT module
+	 */
+	SIM_SCGC6 |= SIM_SCGC6_PIT_MASK;
+
+	set_irq_priority (INT_PIT0-16, 6); 	/* assign priority of PIT2 irq in NVIC */
+	enable_irq(INT_PIT0-16) ;   		/* enable PIT2 interrupt in NVIC */
+
+	PIT0_TIMER_DELAY = 50; //  =  50Mhz * 1us = 50
+	PIT0_PULSE_TIMER = PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK;
 }
 
 void UartPingTask(void *pvParameters)
@@ -37,21 +66,8 @@ void UartPingTask(void *pvParameters)
 
 	while(1)
 	{
-		if( uartFlagSwitch == 1)
-		{
-			uartFlagSwitch = 0;
-			PORTE_PCR1 = PORT_PCR_MUX(0x03);
-		}
-
-		if( uartFlagSwitch == 2)
-		{
-			uartFlagSwitch = 0;
-			PORTE_PCR1 = PORT_PCR_MUX(0x01);
-			GPIOE_PDDR = ~(1<<1);
-		}
-		portEVal = GPIOE_PDIR & (1<<1);
-		printf("%d",portEVal);
-		vTaskDelay(10);
+		GPIOB_PTOR = (PIN0);
+		vTaskDelay(1);
 	}
 }
 
