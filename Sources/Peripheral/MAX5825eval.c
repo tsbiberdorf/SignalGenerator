@@ -36,6 +36,8 @@ typedef enum _MAX5825Cmds_e
 	eSWClrMAX5825,
 	eLoadCODEMAX5825,
 	eCode2DACMAX5825,
+	eMAX5825GenWave,
+	eMAX5825StopGenWave,
 }eMAX5825Cmds_t;
 
 #define MAX5825_RESET_REG		(0x35)
@@ -128,6 +130,7 @@ static void menuMAX5825()
 	printf("d2: s/w clear\r\n");
 	printf("d3 <dac#> <value> : write 12bit value to DAC# CODE registers\r\n");
 	printf("d4 <dac#> : write DAC# CODE to DAC register\r\n");
+	printf("d5 <dac#> : generate wave on DAC# \r\n");
 }
 
 /*
@@ -205,6 +208,12 @@ void MAX5825evalTask(void *pvParameters)
 			case eCode2DACMAX5825:
 				setCode2DACRegMAX5825(gDACCmd.channel);
 				break;
+			case eMAX5825GenWave:
+				setStartGenWave(gDACCmd.channel);
+				break;
+			case eMAX5825StopGenWave:
+				setStopGenWave();
+				break;
 			}
 			gMAX5825cmd = 0;
 		}
@@ -268,6 +277,23 @@ void parseDACCmd(const int8_t *Cmd)
 		{
 			printf("invalid parameters to set DAC value\r\n");
 		}
+		break;
+	case '5':
+		dacCh = 0;
+		dacCh = strtol( (Cmd+2),NULL,10);
+		if(dacCh != 0)
+		{
+			printf("eCode2DACMAX5825 %d\r\n",dacCh,dacValue);
+			setChannel(dacCh);
+			gMAX5825cmd = eMAX5825GenWave;
+		}
+		else
+		{
+			printf("invalid parameters to set DAC value\r\n");
+		}
+		break;
+	case '5':
+		gMAX5825cmd = eMAX5825StopGenWave;
 		break;
 	default:
 		menuMAX5825();
