@@ -144,7 +144,7 @@ extern void vPortSVCHandler( void ) __attribute__ (( naked ));
 #define VECTOR_77         (tIsrFunc)&UnhandledInterrupt         /* 0x4D -    ivINT_PORTC                   unused by PE */
 #define VECTOR_78         (tIsrFunc)&UnhandledInterrupt         /* 0x4E -    ivINT_PORTD                   unused by PE */
 #define VECTOR_79         (tIsrFunc)&UnhandledInterrupt         /* 0x4F -    ivINT_PORTE                   unused by PE */
-#define VECTOR_80         (tIsrFunc)&UnhandledInterrupt         /* 0x50 -    ivINT_SWI                     unused by PE */
+#define VECTOR_80         (tIsrFunc)&Unhandled_ivINT_SWI         /* 0x50 -    ivINT_SWI                     unused by PE */
 #define VECTOR_81         (tIsrFunc)&UnhandledInterrupt         /* 0x51 -    ivINT_Reserved81              unused by PE */
 #define VECTOR_82         (tIsrFunc)&UnhandledInterrupt         /* 0x52 -    ivINT_Reserved82              unused by PE */
 #define VECTOR_83         (tIsrFunc)&UnhandledInterrupt         /* 0x53 -    ivINT_Reserved83              unused by PE */

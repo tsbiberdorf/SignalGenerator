@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-
+#include "arm_cm4.h"
 #include "Cpu.h"
 
 #include "FreeRTOS.h"
@@ -72,7 +72,7 @@ int main(void)
 	fprintf(stderr, "Creating Tasks\r\n");
 	CreateSigGenTasks();
 	fprintf(stderr, "Starting Scheduler\r\n");
-
+	EnableInterrupts;
 	// I think I need to add vPortSVCHandler, vPortPendSVHandler and vPortTickHandler to the IVT
 	vTaskStartScheduler();
 

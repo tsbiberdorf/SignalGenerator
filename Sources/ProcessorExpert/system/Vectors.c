@@ -1252,7 +1252,8 @@ PE_ISR(Unhandled_ivINT_PORTE)
 PE_ISR(Unhandled_ivINT_SWI);
 PE_ISR(Unhandled_ivINT_SWI)
 {
-  PE_DEBUGHALT();
+	extern void SWI_IRQ();
+	SWI_IRQ();
 }
 
 /*
