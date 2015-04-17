@@ -24,6 +24,7 @@ const char *gUartPingTaskname = "UART ping Interface Task";
 #define PIN2 (1<<2)
 #define PIN3 (1<<3)
 #define PIN4 (1<<4)
+#define PIN11 (1<<11)
 #define PIT0_PULSE_TIMER (PIT_TCTRL0) /**< timer control register */
 #define PIT0_TIMER_DELAY (PIT_LDVAL0) /**< timeout period calculated by (Period * 48Mhz) */
 #define BUFFER_SIZE (4*1014)
@@ -94,7 +95,7 @@ static void pushDataByte(sbitBang_t *BitSample)
 	else
 	{
 		BitSample->status = eData;
-		BitSample->writePtr[BitSample->wrIndex] = BitSample->currentByte;
+		BitSample->writePtr[BitSample->wrIndex] = BitSample->bufferByte;
 	}
 }
 
@@ -111,7 +112,6 @@ static void DataStartBit(uint32_t ReadValue,sbitBang_t *BitSample)
 	{
 		if(!(BitSample->readMask & ReadValue))
 		{
-			GPIOD_PCOR = (PIN4);
 			GPIOB_PSOR = (PIN1);
 			GPIOD_PSOR = (PIN2);
 			/* our start bit must be zero to be
@@ -121,7 +121,6 @@ static void DataStartBit(uint32_t ReadValue,sbitBang_t *BitSample)
 		}
 		else
 		{
-			GPIOD_PSOR = (PIN4);
 			BitSample->readCnt = 0;
 			GPIOD_PCOR = (PIN2);
 		}
@@ -152,7 +151,6 @@ static void DataStopBit(uint32_t ReadValue,sbitBang_t *BitSample)
 
 	if( BitSample->readMask & ReadValue )
 	{
-		GPIOD_PSOR = (PIN4);
 		/* our stop bit must be high to be
 		 * valid
 		 */
@@ -163,7 +161,6 @@ static void DataStopBit(uint32_t ReadValue,sbitBang_t *BitSample)
 		/*
 		 * shift read byte to results queue
 		 */
-		pushDataByte(BitSample);
 		BitSample->bufferByte = BitSample->currentByte;
 		tmpSample = BitSample;
 		NVICSTIR = (INT_SWI-16); /* trigger a SWI interrrupt */
@@ -235,7 +232,6 @@ static void DataBitSample(uint32_t ReadValue,uint8_t Shift, sbitBang_t *BitSampl
 		 */
 		if((BitSample->readMask & ReadValue))
 		{
-			GPIOD_PSOR = (PIN4);
 
 			BitSample->readCnt++;
 			BitSample->readBit = BitSample->readBit << 1;
@@ -243,7 +239,6 @@ static void DataBitSample(uint32_t ReadValue,uint8_t Shift, sbitBang_t *BitSampl
 		}
 		else
 		{
-			GPIOD_PCOR = (PIN4);
 			BitSample->readCnt++;
 			BitSample->readBit = BitSample->readBit << 1;
 		}
@@ -255,8 +250,9 @@ static void DataBitSample(uint32_t ReadValue,uint8_t Shift, sbitBang_t *BitSampl
 		/*
 		 * verify that our bit that we just read is valid
 		 */
-		if(BitSample->readBit ==  VERIFY_HIGH_BIT)
+		if(BitSample->readBit &0x02)//==  VERIFY_HIGH_BIT)
 		{
+			GPIOD_PSOR = (PIN4);
 			GPIOD_PSOR = (PIN1);
 			/*
 			 * we just read a high level
@@ -264,15 +260,18 @@ static void DataBitSample(uint32_t ReadValue,uint8_t Shift, sbitBang_t *BitSampl
 			BitSample->bitElement++;
 			BitSample->currentByte |= (0x80>>Shift);
 			GPIOD_PCOR = (PIN1);
+			GPIOD_PCOR = (PIN4);
 		}
-		else if(BitSample->readBit ==  VERIFY_LOW_BIT)
+		else if((BitSample->readBit &0x2)==0)//==  VERIFY_LOW_BIT)
 		{
+			GPIOD_PSOR = (PIN3);
 			GPIOD_PSOR = (PIN0);
 			/*
 			 * we just read a zero level
 			 */
 			BitSample->bitElement++;
 			GPIOD_PCOR = (PIN0);
+			GPIOD_PCOR = (PIN3);
 		}
 		else
 		{
@@ -326,9 +325,7 @@ static void uartPortBSample(uint32_t ReadValue)
 		case eBit1:
 			shift--;
 		case eBit0:
-			GPIOD_PSOR = (PIN3);
 			DataBitSample(ReadValue, shift, (gPortB.port[i]) );
-			GPIOD_PCOR = (PIN3);
 			break;
 		case eStop:
 			DataStopBit( ReadValue, (gPortB.port[i]) );
@@ -372,7 +369,7 @@ static void initPortBSampleData()
 static void initUartRxPins()
 {
 	int32_t gpioValue;
-	SIM_SCGC5 |= (SIM_SCGC5_PORTB_MASK|SIM_SCGC5_PORTD_MASK);
+	SIM_SCGC5 |= (SIM_SCGC5_PORTB_MASK|SIM_SCGC5_PORTC_MASK|SIM_SCGC5_PORTD_MASK);
 
 	gpioValue = GPIOB_PDDR;
 	gpioValue &= ~(PIN0); /* clear pin0 */
@@ -391,6 +388,10 @@ static void initUartRxPins()
 	PORTD_PCR2 = PORT_PCR_MUX(0x1);
 	PORTD_PCR3 = PORT_PCR_MUX(0x1);
 	PORTD_PCR4 = PORT_PCR_MUX(0x1);
+
+	GPIOC_PDDR |= (PIN11);
+	GPIOC_PCOR = (PIN11);
+	PORTC_PCR11 = PORT_PCR_MUX(0x1);
 
 	/*
 	 * enable clock for PIT module
@@ -430,9 +431,10 @@ void UartPingTask(void *pvParameters)
 			if( gPortB.port[i]->rdIndex != gPortB.port[i]->wrIndex )
 			{
 				printf("%c",gPortB.port[i]->writePtr[gPortB.port[i]->rdIndex++]);
+//				printf("%X\r\n",gPortB.port[i]->writePtr[gPortB.port[i]->rdIndex++]);
 			}
 		}
-		vTaskDelay(10);
+		vTaskDelay(50);
 	}
 }
 
