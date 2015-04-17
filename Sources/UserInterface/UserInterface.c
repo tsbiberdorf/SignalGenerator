@@ -98,6 +98,6 @@ void UserInterfaceTask(void *pvParameters)
 			}
 			newChar = 0;
 		}
-		vTaskDelay(1);
+		vTaskDelay(5);
 	}
 }

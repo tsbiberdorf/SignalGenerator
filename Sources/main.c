@@ -24,36 +24,36 @@ char *task2name = "Task2";
  * This task is made to stress the printf functionality
  * @param pvParameters
  */
-//void TestPrint(void *pvParameters)
-//{
-//	int32_t delay=100;
-//	int32_t getFlag = 0;
-//	if( strcmp((char*)pvParameters,task1name) == 0)
-//	{
-//		delay = 1000;
-//		getFlag = 1;
-//	}
-//	if( strcmp((char*)pvParameters,task2name) == 0)
-//	{
-//		delay = 5000;
-//	}
-//
-//	for(;;)
-//	{
-//		printf("%s\r\n", (char*)pvParameters);
-//		vTaskDelay(delay);
-//	}
-//}
+void TestPrint(void *pvParameters)
+{
+	int32_t delay=100;
+	int32_t getFlag = 0;
+	if( strcmp((char*)pvParameters,task1name) == 0)
+	{
+		delay = 100;
+		getFlag = 1;
+	}
+	if( strcmp((char*)pvParameters,task2name) == 0)
+	{
+		delay = 500;
+	}
+
+	for(;;)
+	{
+		printf("%s\r\n", (char*)pvParameters);
+		vTaskDelay(delay);
+	}
+}
 
 static void CreateSigGenTasks()
 {
 //	xTaskCreate(TestPrint, task1name, 512, task1name, 3, NULL);
-//	xTaskCreate(TestPrint, task2name, 512, task2name, 2, NULL);
+//	xTaskCreate(TestPrint, task2name, 512, task2name, 3, NULL);
 
-	xTaskCreate(UserInterfaceTask, gUserInterfaceTaskname, 512, (char *)gUserInterfaceTaskname, 2, NULL);
+	xTaskCreate(UserInterfaceTask, gUserInterfaceTaskname, 512, (char *)gUserInterfaceTaskname, 4, NULL);
 	xTaskCreate(FXOS8700CQTask, gFXOS8700CQTaskname, 512, (char *)gFXOS8700CQTaskname, 3, NULL);
-	xTaskCreate(MAX5825evalTask, gMAX5825evalTaskname, 512, (char *)gMAX5825evalTaskname, 4, NULL);
-	xTaskCreate(UartPingTask, gUartPingTaskname, 512, (char *)gUartPingTaskname, 4, NULL);
+//	xTaskCreate(MAX5825evalTask, gMAX5825evalTaskname, 512, (char *)gMAX5825evalTaskname, 3, NULL);
+	xTaskCreate(UartPingTask, gUartPingTaskname, 512, (char *)gUartPingTaskname, 3, NULL);
 }
 
 /*!
@@ -72,7 +72,7 @@ int main(void)
 	fprintf(stderr, "Creating Tasks\r\n");
 	CreateSigGenTasks();
 	fprintf(stderr, "Starting Scheduler\r\n");
-	EnableInterrupts;
+//	EnableInterrupts;
 	// I think I need to add vPortSVCHandler, vPortPendSVHandler and vPortTickHandler to the IVT
 	vTaskStartScheduler();
 

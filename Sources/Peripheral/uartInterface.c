@@ -86,7 +86,7 @@ static void pushDataByte(sbitBang_t *BitSample)
 	else
 	{
 		BitSample->status = eData;
-		BitSample->writePtr+BitSample->wrIndex = BitSample->currentByte;
+		BitSample->writePtr[BitSample->wrIndex] = BitSample->currentByte;
 	}
 }
 
@@ -298,9 +298,10 @@ void PIT0_IRQ()
 	uint32_t gpioRead;
 
 	PIT_TFLG0 = PIT_TFLG_TIF_MASK; // clear IRQ
-	GPIOB_PTOR = (PIN1);
+	GPIOB_PSOR = (PIN1);
 	gpioRead = INPUT_PORT;
 	uartPortBSample(gpioRead);
+	GPIOB_PCOR = (PIN1);
 }
 
 void SWI_IRQ()
@@ -358,8 +359,8 @@ void UartPingTask(void *pvParameters)
 	uint32_t uartFlagSwitch = 0;
 	printf("start UartPingTask\r\n");
 
-	set_irq_priority (INT_SWI-16, 2);
-	enable_irq(INT_SWI-16) ;   // enable  switch handler interrupt
+//	set_irq_priority (INT_SWI-16, 2);
+//	enable_irq(INT_SWI-16) ;   // enable  switch handler interrupt
 
 	initPortBSampleData();
 	initUartRxPins();
@@ -369,7 +370,7 @@ void UartPingTask(void *pvParameters)
 		GPIOB_PTOR = (PIN0);
 //		NVICSTIR = (INT_SWI-16); /* trigger a SWI interrrupt */
 
-		vTaskDelay(1);
+		vTaskDelay(10);
 	}
 }
 
