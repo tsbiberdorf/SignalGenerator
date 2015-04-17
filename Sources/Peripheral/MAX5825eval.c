@@ -131,6 +131,23 @@ static void menuMAX5825()
 	printf("d3 <dac#> <value> : write 12bit value to DAC# CODE registers\r\n");
 	printf("d4 <dac#> : write DAC# CODE to DAC register\r\n");
 	printf("d5 <dac#> : generate wave on DAC# \r\n");
+	printf("d6 : stop all wave generation \r\n");
+}
+
+/**
+ *
+ */
+void setStartGenWave(uint8_t DACAddr)
+{
+	printf("start wave %d\r\n",DACAddr);
+}
+
+/**
+ *
+ */
+void setStopGenWave()
+{
+	printf("stop wave\r\n");
 }
 
 /*
@@ -292,7 +309,7 @@ void parseDACCmd(const int8_t *Cmd)
 			printf("invalid parameters to set DAC value\r\n");
 		}
 		break;
-	case '5':
+	case '6':
 		gMAX5825cmd = eMAX5825StopGenWave;
 		break;
 	default:

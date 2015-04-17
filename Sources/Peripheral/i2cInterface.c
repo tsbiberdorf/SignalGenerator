@@ -251,14 +251,12 @@ void init_I2C(void)
 	//    PORTB_PCR3 = PORT_PCR_MUX(2);
 
 	regValue = I2C0_S;
-	printf("%X",regValue);
 	if(regValue & I2C_S_ARBL_MASK)
 	{
 		I2C0_S |= I2C_S_ARBL_MASK;
 		printf("had to write I2C_S_ARBL_MASK\r\n");
 	}
 	regValue = I2C0_S;
-	printf("%X",regValue);
 
 	I2C0_F  = 0x14; /* set MULT and ICR */
 //	I2C0_F  = I2C_F_MULT(0x00) | I2C_F_ICR(0x14);       /* set MULT and ICR */
