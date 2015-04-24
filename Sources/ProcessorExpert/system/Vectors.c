@@ -1011,7 +1011,9 @@ PE_ISR(Unhandled_ivINT_RTC_Seconds)
 PE_ISR(Unhandled_ivINT_PIT0);
 PE_ISR(Unhandled_ivINT_PIT0)
 {
-  PE_DEBUGHALT();
+	extern void PIT0_IRQ();
+
+	PIT0_IRQ();
 }
 
 /*

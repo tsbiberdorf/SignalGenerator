@@ -28,6 +28,15 @@
 /******************************************************************************
  * MACROs/variables
  */
+#define DAC_WR_SAMPLE_RATE (172)
+#define PIN0 (1<<0)
+#define PIN1 (1<<1)
+#define PIN2 (1<<2)
+#define PIN3 (1<<3)
+#define PIN4 (1<<4)
+#define PIN11 (1<<11)
+#define PIT0_PULSE_TIMER (PIT_TCTRL0) /**< timer control register */
+#define PIT0_TIMER_DELAY (PIT_LDVAL0) /**< timeout period calculated by (Period * 48Mhz) */
 
 typedef enum _MAX5825Cmds_e
 {
@@ -173,6 +182,14 @@ static void setValue(uint16_t Value)
 	gDACCmd.value = Value;
 }
 
+void PIT0_IRQ()
+{
+
+	PIT_TFLG0 = PIT_TFLG_TIF_MASK; // clear IRQ
+//	GPIOB_PSOR = (PIN1);
+//	GPIOB_PCOR = (PIN1);
+}
+
 
 /**
  * ============================================================================
@@ -183,6 +200,19 @@ static void setValue(uint16_t Value)
 void initMAX5825()
 {
 	gMAX5825cmd = eMAX5825idle;
+
+	/*
+	 * enable clock for PIT module
+	 */
+	SIM_SCGC6 |= SIM_SCGC6_PIT_MASK;
+
+	set_irq_priority (INT_PIT0-16, 1); 	/* assign priority of PIT2 irq in NVIC */
+	enable_irq(INT_PIT0-16) ;   		/* enable PIT2 interrupt in NVIC */
+
+	PIT0_TIMER_DELAY = DAC_WR_SAMPLE_RATE; //  =  60Mhz * 2.893us = 173.6
+	PIT_MCR = 0;
+	PIT0_PULSE_TIMER = PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK;
+
 }
 
 /**
