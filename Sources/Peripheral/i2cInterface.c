@@ -10,6 +10,8 @@
 #include <assert.h>
 
 #include "Cpu.h"
+#include "arm_cm4.h"
+
 #include "i2cInterface.h"
 
 #define i2c_DisableAck()       I2C0_C1 |= I2C_C1_TXAK_MASK
@@ -36,6 +38,53 @@
 
 uint8_t MasterTransmission;
 uint8_t SlaveID;
+
+typedef enum I2CStates_e
+{
+	eI2CIdle,
+	eI2CWriteRegister,
+	eI2CWriteData,
+	eI2CStop,
+}eI2CStates_t;
+typedef struct I2CComm_s
+{
+	uint8_t Register;
+	uint8_t *DataPtr;
+	uint8_t DataSize;
+	eI2CStates_t State;
+}sI2CComm_t;
+
+sI2CComm_t gI2COp;
+
+void i2c0_IRQ()
+{
+	I2C0_S |= I2C_S_IICIF_MASK;
+
+	switch(gI2COp.State)
+	{
+	case eI2CIdle:
+		break;
+	case eI2CWriteRegister:
+		I2C0_D = gI2COp.Register;
+		gI2COp.State = eI2CWriteData;
+		break;
+	case eI2CWriteData:
+		I2C0_D = *(gI2COp.DataPtr++);
+		gI2COp.DataSize--;
+		if(gI2COp.DataSize == 0)
+		{
+			gI2COp.State = eI2CStop;
+		}
+		break;
+	case eI2CStop:
+		gI2COp.State = eI2CIdle;
+		I2C0_C1  &= ~I2C_C1_MST_MASK;
+		I2C0_C1  &= ~I2C_C1_TX_MASK;
+		disable_irq(INT_I2C0-16) ;   	/* disable I2C0 interrupt in NVIC */
+		I2C0_C1 &= ~I2C_C1_IICIE_MASK;
+		break;
+	}
+}
 
 
 /*******************************************************************/
@@ -192,6 +241,14 @@ unsigned char i2cMultiReadRegister(uint8_t Address, uint8_t u8RegisterAddress, u
  */
 void i2cWriteRegister(uint8_t Address, uint8_t u8RegisterAddress, uint8_t u8Data)
 {
+	gI2COp.Register = u8RegisterAddress;
+	gI2COp.DataPtr = &u8Data;
+	gI2COp.DataSize = 1;
+	gI2COp.State = eI2CWriteRegister;
+
+	enable_irq(INT_I2C0-16) ;   	/* enable I2C0 interrupt in NVIC */
+	I2C0_C1 |= I2C_C1_IICIE_MASK;
+
 	/* send data to slave */
 	IIC_StartTransmission(Address,SlaveID,MWSR);
 	i2c_Wait();
@@ -219,18 +276,25 @@ void i2cWriteData(uint8_t Address, uint8_t *PtrData,uint8_t Size)
 	uint8_t i;
 	if(Size)
 	{
+		gI2COp.Register = Address;
+		gI2COp.DataPtr = PtrData;
+		gI2COp.DataSize = Size;
+		gI2COp.State = eI2CWriteRegister;
+
+		enable_irq(INT_I2C0-16) ;   		/* enable PIT2 interrupt in NVIC */
+		I2C0_C1 |= I2C_C1_IICIE_MASK;
 		/* send data to slave */
 		IIC_StartTransmission(Address,SlaveID,MWSR);
-		i2c_Wait();
-
-		for(i=0; i<Size; i++)
-		{
-			I2C0_D = PtrData[i];
-			i2c_Wait();
-		}
-		i2c_Stop();
-
-		Pause();
+//		i2c_Wait();
+//
+//		for(i=0; i<Size; i++)
+//		{
+//			I2C0_D = PtrData[i];
+//			i2c_Wait();
+//		}
+//		i2c_Stop();
+//
+//		Pause();
 	}
 }
 /**
@@ -258,10 +322,15 @@ void init_I2C(void)
 	}
 	regValue = I2C0_S;
 
-	I2C0_F  = 0x14; /* set MULT and ICR */
+	I2C0_F  = 0xf; /* set MULT and ICR */
+//	I2C0_F  = 0x14; /* set MULT and ICR */
 //	I2C0_F  = I2C_F_MULT(0x00) | I2C_F_ICR(0x14);       /* set MULT and ICR */
 //	I2C0_F  = I2C_F_MULT(0x20) | I2C_F_ICR(0x00);       /* set MULT and ICR */
 
 	I2C0_C1 = I2C_C1_IICEN_MASK;       /* enable IIC */
+
+	set_irq_priority (INT_I2C0-16, 1); 	/* assign priority of I2C0 irq in NVIC */
+//	enable_irq(INT_I2C0-16) ;   		/* enable I2C0 interrupt in NVIC */
+
 }
 

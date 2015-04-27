@@ -30,7 +30,7 @@
 /******************************************************************************
  * MACROs/variables
  */
-#define DAC_WR_SAMPLE_RATE (172)
+#define DAC_WR_SAMPLE_RATE (7500) /**< how often to trigger a DAC write 8K (60Mhz / 8K = 7500 */
 #define PIN0 (1<<0)
 #define PIN1 (1<<1)
 #define PIN2 (1<<2)
@@ -105,7 +105,7 @@ static void swClrMAX5825()
  */
 static void setCodeMAX5825(uint8_t DACAddr,int16_t Data)
 {
-	uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_SET_CODE_REG,0x0,0x0};
+	static uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_SET_CODE_REG,0x0,0x0};
 
 	cmdBlock[0] |= DACAddr & 0xF;/* mask lower nibble of address to select
 	 	 	 	 	 	 	 	 	 * the DAC to write to */
@@ -131,7 +131,7 @@ static void setCodeMAX5825(uint8_t DACAddr,int16_t Data)
  */
 static void setCode2DACRegMAX5825(uint8_t DACAddr)
 {
-	uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_LOAD_DAC_REG,0x0,0x0};
+	static uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_LOAD_DAC_REG,0x0,0x0};
 
 	cmdBlock[0] |= DACAddr & 0xF;/* mask lower nibble of address to select
 	 	 	 	 	 	 	 	 	 * the DAC to write to */
@@ -201,23 +201,33 @@ static void setValue(uint16_t Value)
 int16_t gDelta = DEFAULT_DELTA;
 void PIT0_IRQ()
 {
+	static uint16_t wrAssign = 0;
 	uint16_t tmp;
 	PIT_TFLG0 = PIT_TFLG_TIF_MASK; // clear IRQ
 	SETD_BIT0();
-	tmp = gDACCmd.value + gDelta;
-	if(tmp > MAX_DAC_LEVEL)
+
+	if( wrAssign == 0)
 	{
-//		tmp = tmp - MAX_DAC_LEVEL;
-		gDelta *= -1;
+		tmp = gDACCmd.value + gDelta;
+		if(tmp > MAX_DAC_LEVEL)
+		{
+			//		tmp = tmp - MAX_DAC_LEVEL;
+			gDelta *= -1;
+		}
+		if(tmp < 0)
+		{
+			//		tmp = tmp+DEFAULT_DELTA;
+			gDelta *= -1;
+		}
+		gDACCmd.value = tmp;
+		setCodeMAX5825(gDACCmd.channel,gDACCmd.value);
+		wrAssign = 1;
 	}
-	if(tmp < 0)
+	else
 	{
-//		tmp = tmp+DEFAULT_DELTA;
-		gDelta *= -1;
+		setCode2DACRegMAX5825(gDACCmd.channel);
+		wrAssign = 0;
 	}
-	gDACCmd.value = tmp;
-	setCodeMAX5825(gDACCmd.channel,gDACCmd.value);
-	setCode2DACRegMAX5825(gDACCmd.channel);
 	CLRD_BIT0();
 }
 
@@ -240,7 +250,7 @@ void initMAX5825()
 	set_irq_priority (INT_PIT0-16, 1); 	/* assign priority of PIT2 irq in NVIC */
 	enable_irq(INT_PIT0-16) ;   		/* enable PIT2 interrupt in NVIC */
 
-	PIT0_TIMER_DELAY = DAC_WR_SAMPLE_RATE; //  =  60Mhz * 2.893us = 173.6
+	PIT0_TIMER_DELAY = DAC_WR_SAMPLE_RATE; //  =  updates every 8KHz
 	PIT_MCR = 0;
 
 }

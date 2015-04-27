@@ -651,7 +651,9 @@ PE_ISR(Unhandled_ivINT_RNG)
 PE_ISR(Unhandled_ivINT_I2C0);
 PE_ISR(Unhandled_ivINT_I2C0)
 {
-  PE_DEBUGHALT();
+  extern void i2c0_IRQ();
+  i2c0_IRQ();
+
 }
 
 /*
