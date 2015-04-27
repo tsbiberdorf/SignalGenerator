@@ -63,6 +63,16 @@ int main(void)
 	int value = 0;
 	PE_low_level_init();
 
+#ifdef PORTD_DEBUG_IO
+	SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK;
+	GPIOD_PDDR |= BIT0|BIT1|BIT2|BIT3;
+	GPIOD_PCOR |= BIT0|BIT1|BIT2|BIT3;
+	PORTD_PCR0 = PORT_PCR_MUX(0x1);
+	PORTD_PCR1 = PORT_PCR_MUX(0x1);
+	PORTD_PCR2 = PORT_PCR_MUX(0x1);
+	PORTD_PCR3 = PORT_PCR_MUX(0x1);
+#endif
+
 	fprintf(stderr, "\n\n\n\n\r\nMP8000\r\n");
 	fprintf(stderr, "FW Version %d.%d.%d.%d\r\n\r\n", MAJOR_VERSION,
 			MINOR_VERSION, VERSION_VERSION, REVISION_VERSION);

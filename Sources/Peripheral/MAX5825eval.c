@@ -18,7 +18,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "main.h"
 #include "Cpu.h"
+#include "arm_cm4.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "i2cInterface.h"
@@ -149,6 +151,7 @@ static void menuMAX5825()
 void setStartGenWave(uint8_t DACAddr)
 {
 	printf("start wave %d\r\n",DACAddr);
+	PIT0_PULSE_TIMER = PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK;
 }
 
 /**
@@ -157,6 +160,7 @@ void setStartGenWave(uint8_t DACAddr)
 void setStopGenWave()
 {
 	printf("stop wave\r\n");
+	PIT0_PULSE_TIMER = 0;
 }
 
 /*
@@ -186,6 +190,7 @@ void PIT0_IRQ()
 {
 
 	PIT_TFLG0 = PIT_TFLG_TIF_MASK; // clear IRQ
+	TGLD_BIT0();
 //	GPIOB_PSOR = (PIN1);
 //	GPIOB_PCOR = (PIN1);
 }
@@ -211,7 +216,6 @@ void initMAX5825()
 
 	PIT0_TIMER_DELAY = DAC_WR_SAMPLE_RATE; //  =  60Mhz * 2.893us = 173.6
 	PIT_MCR = 0;
-	PIT0_PULSE_TIMER = PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK;
 
 }
 
