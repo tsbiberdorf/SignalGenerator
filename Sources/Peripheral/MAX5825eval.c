@@ -67,7 +67,7 @@ uint8_t gMAX5825Data = 0;
 typedef struct sDAC
 {
 	uint8_t channel;
-	uint16_t value;
+	int16_t value;
 }sDAC_t;
 
 sDAC_t gDACCmd;
@@ -103,13 +103,21 @@ static void swClrMAX5825()
 /**
  * @details write to the CODE register of the targeted DAC channel
  */
-static void setCodeMAX5825(uint8_t DACAddr,uint16_t Data)
+static void setCodeMAX5825(uint8_t DACAddr,int16_t Data)
 {
 	uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_SET_CODE_REG,0x0,0x0};
 
 	cmdBlock[0] |= DACAddr & 0xF;/* mask lower nibble of address to select
 	 	 	 	 	 	 	 	 	 * the DAC to write to */
 
+	if(Data < 0)
+	{
+		Data = 0;
+	}
+	if(Data > 0xFFF)
+	{
+		Data = 0xFFF;
+	}
 	/* MSB must be shifted down Data[12..4] */
 	cmdBlock[1] = (uint8_t)((Data & 0x0FF0) >> 4);
 	 /* LSnibble Data[3..0] must be shifted to upper nibble */
@@ -152,6 +160,9 @@ void setStartGenWave(uint8_t DACAddr)
 {
 	printf("start wave %d\r\n",DACAddr);
 	PIT0_PULSE_TIMER = PIT_TCTRL_TIE_MASK | PIT_TCTRL_TEN_MASK;
+	gDACCmd.channel = DACAddr;
+	gDACCmd.value = 0;
+
 }
 
 /**
@@ -185,14 +196,29 @@ static void setValue(uint16_t Value)
 	 */
 	gDACCmd.value = Value;
 }
-
+#define DEFAULT_DELTA (64)
+#define MAX_DAC_LEVEL (0xFFF)
+int16_t gDelta = DEFAULT_DELTA;
 void PIT0_IRQ()
 {
-
+	uint16_t tmp;
 	PIT_TFLG0 = PIT_TFLG_TIF_MASK; // clear IRQ
-	TGLD_BIT0();
-//	GPIOB_PSOR = (PIN1);
-//	GPIOB_PCOR = (PIN1);
+	SETD_BIT0();
+	tmp = gDACCmd.value + gDelta;
+	if(tmp > MAX_DAC_LEVEL)
+	{
+//		tmp = tmp - MAX_DAC_LEVEL;
+		gDelta *= -1;
+	}
+	if(tmp < 0)
+	{
+//		tmp = tmp+DEFAULT_DELTA;
+		gDelta *= -1;
+	}
+	gDACCmd.value = tmp;
+	setCodeMAX5825(gDACCmd.channel,gDACCmd.value);
+	setCode2DACRegMAX5825(gDACCmd.channel);
+	CLRD_BIT0();
 }
 
 
