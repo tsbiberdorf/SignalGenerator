@@ -45,6 +45,8 @@ typedef enum _MAX5825Cmds_e
 	eMAX5825idle,
 	eResetMAX5825,
 	eSWClrMAX5825,
+	eSWPwrMAX5825,
+	eSWRefMAX5825,
 	eLoadCODEMAX5825,
 	eCode2DACMAX5825,
 	eMAX5825GenWave,
@@ -53,6 +55,8 @@ typedef enum _MAX5825Cmds_e
 
 #define MAX5825_RESET_REG		(0x35)
 #define MAX5825_SW_CLR_REG		(0x34)
+#define MAX5825_SW_PWR_REG		(0x20)
+#define MAX5825_SW_REF_REG		(0x27)
 #define MAX5825_SET_CODE_REG	(0x80)
 #define MAX5825_LOAD_DAC_REG	(0x90)
 #define MAX5825_LOAD_ALLDAC_REG	(0xC1)
@@ -83,7 +87,7 @@ sDAC_t gDACCmd;
  */
 static void resetMAX5825()
 {
-	uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_RESET_REG,0x96,0x30};
+	static  uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_RESET_REG,0x96,0x30};
 	printf("resetMAX5825\r\n");
 
 	i2cWriteData(MAX5825_I2C_ADDRESS,cmdBlock,MAX5825_CMD_BLOCK_SIZE);
@@ -94,8 +98,24 @@ static void resetMAX5825()
  */
 static void swClrMAX5825()
 {
-	uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_SW_CLR_REG,0x96,0x30};
+	static  uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_SW_CLR_REG,0x96,0x30};
 	printf("swClrMAX5825\r\n");
+
+	i2cWriteData(MAX5825_I2C_ADDRESS,cmdBlock,MAX5825_CMD_BLOCK_SIZE);
+}
+
+static void swPwrMAX5825()
+{
+	static uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_SW_PWR_REG,0xFF,0x00};
+	printf("swPwrMAX5825\r\n");
+
+	i2cWriteData(MAX5825_I2C_ADDRESS,cmdBlock,MAX5825_CMD_BLOCK_SIZE);
+}
+
+static void swRefMAX5825()
+{
+	static uint8_t cmdBlock[MAX5825_CMD_BLOCK_SIZE] = {MAX5825_SW_REF_REG,0x00,0x00};
+	printf("swRefMAX5825\r\n");
 
 	i2cWriteData(MAX5825_I2C_ADDRESS,cmdBlock,MAX5825_CMD_BLOCK_SIZE);
 }
@@ -151,6 +171,8 @@ static void menuMAX5825()
 	printf("d4 <dac#> : write DAC# CODE to DAC register\r\n");
 	printf("d5 <dac#> : generate wave on DAC# \r\n");
 	printf("d6 : stop all wave generation \r\n");
+	printf("d7 : PWR cmd \r\n");
+	printf("d8 : REF cmd \r\n");
 }
 
 /**
@@ -253,6 +275,7 @@ void initMAX5825()
 	PIT0_TIMER_DELAY = DAC_WR_SAMPLE_RATE; //  =  updates every 8KHz
 	PIT_MCR = 0;
 
+	printf("initMAX5825\r\n");
 }
 
 /**
@@ -288,6 +311,12 @@ void MAX5825evalTask(void *pvParameters)
 				break;
 			case eSWClrMAX5825:
 				swClrMAX5825();
+				break;
+			case eSWPwrMAX5825:
+				swPwrMAX5825();
+				break;
+			case eSWRefMAX5825:
+				swRefMAX5825();
 				break;
 			case eLoadCODEMAX5825:
 				setCodeMAX5825(gDACCmd.channel,gDACCmd.value);
@@ -382,6 +411,15 @@ void parseDACCmd(const int8_t *Cmd)
 	case '6':
 		gMAX5825cmd = eMAX5825StopGenWave;
 		break;
+	case '7':
+		gMAX5825cmd = eSWPwrMAX5825;
+		swPwrMAX5825();
+		break;
+	case '8':
+		gMAX5825cmd = eSWRefMAX5825;
+		swRefMAX5825();
+		break;
+
 	default:
 		menuMAX5825();
 	}
