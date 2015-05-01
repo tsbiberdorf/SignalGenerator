@@ -60,6 +60,16 @@ void i2c0_IRQ()
 {
 	I2C0_S |= I2C_S_IICIF_MASK;
 
+	if(I2C0_S & I2C_S_RXAK_MASK)
+	{
+		gI2COp.State = eI2CIdle;
+		I2C0_C1  &= ~I2C_C1_MST_MASK;
+		I2C0_C1  &= ~I2C_C1_TX_MASK;
+		disable_irq(INT_I2C0-16) ;   	/* disable I2C0 interrupt in NVIC */
+		I2C0_C1 &= ~I2C_C1_IICIE_MASK;
+		goto exitMethod;
+	}
+
 	switch(gI2COp.State)
 	{
 	case eI2CIdle:
@@ -84,6 +94,8 @@ void i2c0_IRQ()
 		I2C0_C1 &= ~I2C_C1_IICIE_MASK;
 		break;
 	}
+	exitMethod:
+	return;
 }
 
 
@@ -244,7 +256,7 @@ void i2cWriteRegister(uint8_t Address, uint8_t u8RegisterAddress, uint8_t u8Data
 	gI2COp.Register = u8RegisterAddress;
 	gI2COp.DataPtr = &u8Data;
 	gI2COp.DataSize = 1;
-	gI2COp.State = eI2CWriteRegister;
+	gI2COp.State = eI2CWriteData;
 
 	enable_irq(INT_I2C0-16) ;   	/* enable I2C0 interrupt in NVIC */
 	I2C0_C1 |= I2C_C1_IICIE_MASK;
@@ -279,7 +291,7 @@ void i2cWriteData(uint8_t Address, uint8_t *PtrData,uint8_t Size)
 		gI2COp.Register = Address;
 		gI2COp.DataPtr = PtrData;
 		gI2COp.DataSize = Size;
-		gI2COp.State = eI2CWriteRegister;
+		gI2COp.State = eI2CWriteData;
 
 		enable_irq(INT_I2C0-16) ;   		/* enable PIT2 interrupt in NVIC */
 		I2C0_C1 |= I2C_C1_IICIE_MASK;
