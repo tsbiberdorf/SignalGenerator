@@ -63,7 +63,7 @@ typedef enum I2CStates_e
 typedef struct I2CComm_s
 {
 	uint8_t Register;
-	uint8_t *DataPtr;
+	uint16_t *DataPtr;
 	uint8_t DataSize;
 	eI2CStates_t State;
 }sI2CComm_t;
@@ -171,16 +171,19 @@ void i2c0_IRQ()
 		/* Dummy read */
 		result = I2C0_D;
 		i2c_Wait();
+		while(gI2COp.DataSize!=0){
 		*(gI2COp.DataPtr++) = I2C0_D;
 		gI2COp.DataSize--;
 		if(gI2COp.DataSize==0)
 		{
 			i2c_Stop();
 			disable_irq(INT_I2C0-16) ;
-			gI2COp.State=eI2CStop;
+			gI2COp.State=eI2CIdle;
+			result = I2C0_D;
 			break;
 		}
-		result = I2C0_D;
+		}
+
 //		gI2COp.State=eI2CSendStop;
 		break;
 	case eI2CSendStop:
@@ -226,12 +229,12 @@ void Pause(void){
  * @param u8RegisterAddress is Register Address
  * @return Data stored in Register
  */
-unsigned char i2cReadRegister(uint8_t Address, uint8_t u8RegisterAddress, uint8_t *u8Data, uint8_t u8DataSize)
+unsigned char i2cReadRegister(uint8_t Address, uint8_t u8RegisterAddress, uint16_t *u8Data, uint8_t u8DataSize)
 {
 //	uint8_t result;
 	unsigned int j;
 	gI2COp.Register=u8RegisterAddress;
-	gI2COp.DataPtr= *u8Data;
+	gI2COp.DataPtr= u8Data;
 	gI2COp.DataSize = u8DataSize;
 
 	I2C0_C1 |= I2C_C1_IICIE_MASK;
