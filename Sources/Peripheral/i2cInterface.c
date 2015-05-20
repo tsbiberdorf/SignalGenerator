@@ -38,14 +38,28 @@
 
 uint8_t MasterTransmission;
 uint8_t SlaveID;
+/*Added by SAnani & ANienhueser*/
+uint8_t RxFromAddr;
+uint8_t RxFromReg;
+uint8_t InertialDataSize=12;
+uint8_t InertialReadings[12]={0};
+uint8_t FillCounter=0;
 
+/*------------------------------*/
+volatile char result;
 typedef enum I2CStates_e
 {
 	eI2CIdle,
 	eI2CWriteRegister,
 	eI2CWriteData,
+	eGetWord,
+	eWriteRegisterAddr,
+	eRStart,
+	eSetRx,
+	eI2CSendStop,
 	eI2CStop,
 }eI2CStates_t;
+
 typedef struct I2CComm_s
 {
 	uint8_t Register;
@@ -55,7 +69,54 @@ typedef struct I2CComm_s
 }sI2CComm_t;
 
 sI2CComm_t gI2COp;
+/*******************************************************************/
+/*!
+ * Start I2C Transmision
+ * @param SlaveID is the 7 bit Slave Address
+ * @param Mode sets Read or Write Mode
+ */
+static void IIC_StartTransmission (uint8_t Address, uint8_t SlaveID, uint8_t Mode)
+{
+//	RxFromAddr=Address;
+	if(Mode == MWSR)
+	{
+		/* set transmission mode */
+		MasterTransmission = MWSR;
+	}
+	else
+	{
+		/* set transmission mode */
+		MasterTransmission = MRSW;
+	}
 
+	/* shift ID in right possition */
+	SlaveID = Address << 1;
+
+	/* Set R/W bit at end of Slave Address */
+	SlaveID |= (unsigned char)MasterTransmission;
+
+	/* send start signal */
+	i2c_Start();
+
+	/* send ID with W/R bit */
+	i2c_write_byte(SlaveID);
+}
+
+/*--------------------------------------------
+ * I2C Read sequence with IRQ
+ * -------------------------------------------
+ */
+//void sendSlaveAddrI2C(uint8_t Address, uint8_t u8RegisterAddress)
+//{
+//	//IIC_StartTransmission(Address,SlaveIDmMWSR);
+//	gI2COp.State = eI2CSendSlaveAddr;
+//}
+//void sendRegI2C(uint8_t Address, uint8_t u8RegisterAddress)
+//{
+//	//I2C0_D = u8RegisterAddress;
+//	gI2COp.State = eI2CSendDestAddr;
+//}
+//void
 void i2c0_IRQ()
 {
 	I2C0_S |= I2C_S_IICIF_MASK;
@@ -86,6 +147,53 @@ void i2c0_IRQ()
 			gI2COp.State = eI2CStop;
 		}
 		break;
+	case eGetWord:
+//		printf("entered sequence\n");
+//		IIC_StartTransmission(RxFromAddr,SlaveID,MWSR);
+		gI2COp.State=eWriteRegisterAddr;
+		break;
+	case eWriteRegisterAddr:
+		I2C0_D = RxFromReg;
+		gI2COp.State=eRStart;
+		break;
+	case eRStart:
+		I2C0_C1 |= I2C_C1_RSTA_MASK;
+		/* Send Slave Address */
+		I2C0_D = (RxFromAddr << 1) | 0x01; //read address
+		gI2COp.State=eSetRx;
+		break;
+	case eSetRx:
+		I2C0_C1 &= (~I2C_C1_TX_MASK);
+
+//		/* Turn off ACK */
+		I2C0_C1 |= I2C_C1_TXAK_MASK;
+
+		/* Dummy read */
+		result = I2C0_D;
+		i2c_Wait();
+		*(gI2COp.DataPtr++) = I2C0_D;
+		gI2COp.DataSize--;
+		if(gI2COp.DataSize==0)
+		{
+			i2c_Stop();
+			disable_irq(INT_I2C0-16) ;
+			gI2COp.State=eI2CStop;
+			break;
+		}
+		result = I2C0_D;
+//		gI2COp.State=eI2CSendStop;
+		break;
+	case eI2CSendStop:
+		*(gI2COp.DataPtr++) = I2C0_D;
+		gI2COp.DataSize--;
+		if(gI2COp.DataSize==0)
+		{
+			i2c_Stop();
+			disable_irq(INT_I2C0-16) ;
+			break;
+		}
+		result = I2C0_D;
+
 	case eI2CStop:
 		gI2COp.State = eI2CIdle;
 		I2C0_C1  &= ~I2C_C1_MST_MASK;
@@ -99,37 +207,6 @@ void i2c0_IRQ()
 }
 
 
-/*******************************************************************/
-/*!
- * Start I2C Transmision
- * @param SlaveID is the 7 bit Slave Address
- * @param Mode sets Read or Write Mode
- */
-static void IIC_StartTransmission (uint8_t Address, uint8_t SlaveID, uint8_t Mode)
-{
-	if(Mode == MWSR)
-	{
-		/* set transmission mode */
-		MasterTransmission = MWSR;
-	}
-	else
-	{
-		/* set transmission mode */
-		MasterTransmission = MRSW;
-	}
-
-	/* shift ID in right possition */
-	SlaveID = Address << 1;
-
-	/* Set R/W bit at end of Slave Address */
-	SlaveID |= (unsigned char)MasterTransmission;
-
-	/* send start signal */
-	i2c_Start();
-
-	/* send ID with W/R bit */
-	i2c_write_byte(SlaveID);
-}
 
 
 /*******************************************************************/
@@ -149,42 +226,51 @@ void Pause(void){
  * @param u8RegisterAddress is Register Address
  * @return Data stored in Register
  */
-unsigned char i2cReadRegister(uint8_t Address, uint8_t u8RegisterAddress)
+unsigned char i2cReadRegister(uint8_t Address, uint8_t u8RegisterAddress, uint8_t *u8Data, uint8_t u8DataSize)
 {
-	uint8_t result;
+//	uint8_t result;
 	unsigned int j;
+	gI2COp.Register=u8RegisterAddress;
+	gI2COp.DataPtr= *u8Data;
+	gI2COp.DataSize = u8DataSize;
 
-	/* Send Slave Address */
+	I2C0_C1 |= I2C_C1_IICIE_MASK;
+	gI2COp.State=eWriteRegisterAddr;
 	IIC_StartTransmission(Address,SlaveID,MWSR);
-	i2c_Wait();
+	printf("i2CReadRegister\n");
+	enable_irq(INT_I2C0-16);
 
-	/* Write Register Address */
-	I2C0_D = u8RegisterAddress;
-	i2c_Wait();
-
-	/* Do a repeated start */
-	I2C0_C1 |= I2C_C1_RSTA_MASK;
-
-	/* Send Slave Address */
-	I2C0_D = (Address << 1) | 0x01; //read address
-	i2c_Wait();
-
-	/* Put in Rx Mode */
-	I2C0_C1 &= (~I2C_C1_TX_MASK);
-
-	/* Turn off ACK */
-	I2C0_C1 |= I2C_C1_TXAK_MASK;
-
-	/* Dummy read */
-	result = I2C0_D ;
-	for (j=0; j<5000; j++){};
-	i2c_Wait();
-
-	/* Send stop */
-	i2c_Stop();
-	result = I2C0_D ;
-	Pause();
-	return result;
+//	/* Send Slave Address */
+//	IIC_StartTransmission(Address,SlaveID,MWSR);
+//	i2c_Wait();
+//
+//	/* Write Register Address */
+//	I2C0_D = u8RegisterAddress;
+//	i2c_Wait();
+//
+//	/* Do a repeated start */
+//	I2C0_C1 |= I2C_C1_RSTA_MASK;
+//
+//	/* Send Slave Address */
+//	I2C0_D = (Address << 1) | 0x01; //read address
+//	i2c_Wait();
+//
+//	/* Put in Rx Mode */
+//	I2C0_C1 &= (~I2C_C1_TX_MASK);
+//
+//	/* Turn off ACK */
+//	I2C0_C1 |= I2C_C1_TXAK_MASK;
+//
+//	/* Dummy read */
+//	result = I2C0_D ;
+//	for (j=0; j<5000; j++){};
+//	i2c_Wait();
+//
+//	/* Send stop */
+//	i2c_Stop();
+//	result = I2C0_D ;
+//	Pause();
+//	return result;
 }
 
 /*******************************************************************/
@@ -259,6 +345,7 @@ void i2cWriteRegister(uint8_t Address, uint8_t u8RegisterAddress, uint8_t u8Data
 	gI2COp.State = eI2CWriteData;
 
 	enable_irq(INT_I2C0-16) ;   	/* enable I2C0 interrupt in NVIC */
+
 	I2C0_C1 |= I2C_C1_IICIE_MASK;
 
 	/* send data to slave */

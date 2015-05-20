@@ -1,0 +1,8 @@
+20150519T0808 KDS Upgrade Assistant Conversion Report
+Project name: SigGen
+Project location: C:/Users/sanani/Documents/GitHub/SignalGenerator
+Conversion status: success.
+Toolchain settings, for configuration Debug: successfully converted.
+Newlib-nano, for configuration Debug: successfully converted.
+Semihosting support nosys (-specs=nosys.specs), for configuration Debug: successfully added.
+A backup of the original .cproject file has been created in .cproject_backup

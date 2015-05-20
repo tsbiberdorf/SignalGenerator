@@ -173,8 +173,7 @@ static void inertiaComplement(sRawInertialSensor_t *Raw, sInertialSensor_t *Comp
 static int32_t initializeInertiaSensor()
 {
 	uint32_t value;
-
-	value = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_WHO_AM_I_REG);
+//	value = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_WHO_AM_I_REG);
 	if(value != WHO_AM_I_VALUE)
 	{
 		printf("error with FXOS Init\r\n");
@@ -188,6 +187,13 @@ static int32_t initializeInertiaSensor()
 
 	i2cWriteRegister(FXOS8700_I2C_ADDRESS,FXOS_ACCEL_CNTRL_REG1,0x0d);
 
+//	i2cWriteData(FXOS8700_I2C_ADDRESS,FXOS_ACCEL_CNTRL_REG1,0x00);
+//	i2cWriteData(FXOS8700_I2C_ADDRESS,FXOS_MAG_CNTRL_REG1,0x1f);
+//	i2cWriteData(FXOS8700_I2C_ADDRESS,FXOS_MAG_CNTRL_REG2,0x20);
+//	i2cWriteData(FXOS8700_I2C_ADDRESS,FXOS_XYZ_DATA_CFG_REG,0x01);
+//
+//	i2cWriteData(FXOS8700_I2C_ADDRESS,FXOS_ACCEL_CNTRL_REG1,0x0d);
+
 	exitMethod:
 	return 0;
 }
@@ -198,33 +204,42 @@ static int32_t readInertiaSensor(uint8_t SingleRead)
 	uint16_t valueMSB;
 	uint16_t valueLSB;
 	uint8_t result;
-	uint8_t values[12];
+	uint8_t values[12]={0};
 
 	if( SingleRead )
 	{
-		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_X_MSB);
-		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_X_LSB);
-		gRawInertiaSensorReading.xAccel = (int16_t)((valueMSB<<8) | (valueLSB>>2));
-
-		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_Y_MSB);
-		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_Y_LSB);
-		gRawInertiaSensorReading.yAccel = (int16_t)((valueMSB<<8) | (valueLSB>>2));
-
-		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_Z_MSB);
-		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_Z_LSB);
-		gRawInertiaSensorReading.zAccel = (int16_t)((valueMSB<<8) | (valueLSB>>2));
-
-		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_X_MSB);
-		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_X_LSB);
-		gRawInertiaSensorReading.xMag = (int16_t)((valueMSB<<8) | (valueLSB));
-
-		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_Y_MSB);
-		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_Y_LSB);
-		gRawInertiaSensorReading.yMag = (int16_t)((valueMSB<<8) | (valueLSB));
-
-		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_Z_MSB);
-		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_Z_LSB);
-		gRawInertiaSensorReading.zMag = (int16_t)((valueMSB<<8) | (valueLSB));
+		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_X_MSB,&values,12);
+//		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_X_LSB);
+		gRawInertiaSensorReading.xAccel = (int16_t)((valueMSB<<8) );//| (valueLSB>>2));
+//		gRawInertiaSensorReading.xAccel = (int16_t)((valueLSB>>2));
+//		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_Y_MSB);
+//		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_Y_LSB);
+//		gRawInertiaSensorReading.yAccel = (int16_t)((valueMSB<<8) | (valueLSB>>2));
+//
+//		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_Z_MSB);
+//		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_Z_LSB);
+//		gRawInertiaSensorReading.zAccel = (int16_t)((valueMSB<<8) | (valueLSB>>2));
+//
+//		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_X_MSB);
+//		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_X_LSB);
+//		gRawInertiaSensorReading.xMag = (int16_t)((valueMSB<<8) | (valueLSB));
+//
+//		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_Y_MSB);
+//		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_Y_LSB);
+//		gRawInertiaSensorReading.yMag = (int16_t)((valueMSB<<8) | (valueLSB));
+//
+//		valueMSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_Z_MSB);
+//		valueLSB = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_Z_LSB);
+//		gRawInertiaSensorReading.zMag = (int16_t)((valueMSB<<8) | (valueLSB));
+//		result = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_OUT_X_MSB);
+		gRawInertiaSensorReading.xAccel = (int16_t)((values[0]<<8) | (values[1]>>2));
+		gRawInertiaSensorReading.yAccel = (int16_t)((values[2]<<8) | (values[3]>>2));
+		gRawInertiaSensorReading.zAccel = (int16_t)((values[4]<<8) | (values[5]>>2));
+//
+////		result = i2cMultiReadRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_X_MSB,InertialReadings,6);
+//		gRawInertiaSensorReading.xMag = (int16_t)((InertialReadings[6]<<8) | (InertialReadings[7]));
+//		gRawInertiaSensorReading.yMag = (int16_t)((InertialReadings[8]<<8) | (InertialReadings[9]));
+//		gRawInertiaSensorReading.zMag = (int16_t)((InertialReadings[10]<<8) | (InertialReadings[11]));
 	}
 	else
 	{
@@ -349,10 +364,10 @@ void FXOS8700CQTask(void *pvParameters)
 			switch(gFXOScmd)
 			{
 			case eFXOSStatus:
-				result = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_STATUS_REG);
+//				result = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_STATUS_REG);
 				break;
 			case eFXOSWhoAmI:
-				result = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_WHO_AM_I_REG);
+//				result = i2cReadRegister(FXOS8700_I2C_ADDRESS,FXOS_WHO_AM_I_REG);
 				break;
 			case eFXOSDataReadings:
 				result = readInertiaSensor(1);
@@ -364,15 +379,15 @@ void FXOS8700CQTask(void *pvParameters)
 				result = initializeInertiaSensor();
 				break;
 			case eFXOSAccelCntrlReg1:
-				i2cWriteRegister(FXOS8700_I2C_ADDRESS,FXOS_ACCEL_CNTRL_REG1,gFXOSData);
+//				i2cWriteRegister(FXOS8700_I2C_ADDRESS,FXOS_ACCEL_CNTRL_REG1,gFXOSData);
 				result = 0;
 				break;
 			case eFXOSMagCntrlReg1:
-				i2cWriteRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_CNTRL_REG1,gFXOSData);
+//				i2cWriteRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_CNTRL_REG1,gFXOSData);
 				result = 0;
 				break;
 			case eFXOSMagCntrlReg2:
-				i2cWriteRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_CNTRL_REG2,gFXOSData);
+//				i2cWriteRegister(FXOS8700_I2C_ADDRESS,FXOS_MAG_CNTRL_REG2,gFXOSData);
 				result = 0;
 				break;
 			}
