@@ -205,7 +205,7 @@ static int32_t readInertiaSensor(uint8_t SingleRead)
 	uint16_t valueLSB;
 	uint8_t result;
 	uint16_t j;
-	uint16_t values[12]={0};
+	uint16_t values[12];
 
 	if( SingleRead )
 	{

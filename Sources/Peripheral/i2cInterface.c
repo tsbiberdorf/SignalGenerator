@@ -65,6 +65,7 @@ typedef struct I2CComm_s
 	uint8_t Register;
 	uint16_t *DataPtr;
 	uint8_t DataSize;
+	uint8_t Address;
 	eI2CStates_t State;
 }sI2CComm_t;
 
@@ -153,13 +154,13 @@ void i2c0_IRQ()
 		gI2COp.State=eWriteRegisterAddr;
 		break;
 	case eWriteRegisterAddr:
-		I2C0_D = RxFromReg;
+		I2C0_D = gI2COp.Register;
 		gI2COp.State=eRStart;
 		break;
 	case eRStart:
 		I2C0_C1 |= I2C_C1_RSTA_MASK;
 		/* Send Slave Address */
-		I2C0_D = (RxFromAddr << 1) | 0x01; //read address
+		I2C0_D = (gI2COp.Address << 1) | 0x01; //read address
 		gI2COp.State=eSetRx;
 		break;
 	case eSetRx:
@@ -236,10 +237,12 @@ unsigned char i2cReadRegister(uint8_t Address, uint8_t u8RegisterAddress, uint16
 	gI2COp.Register=u8RegisterAddress;
 	gI2COp.DataPtr= u8Data;
 	gI2COp.DataSize = u8DataSize;
+	gI2COp.Address=Address;
 
 	I2C0_C1 |= I2C_C1_IICIE_MASK;
 	gI2COp.State=eWriteRegisterAddr;
 	IIC_StartTransmission(Address,SlaveID,MWSR);
+	i2c_Wait();
 	printf("i2CReadRegister\n");
 	enable_irq(INT_I2C0-16);
 
